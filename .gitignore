@@ -10,3 +10,4 @@ node_modules
 
 # RocketRide pipeline files contain API keys in plaintext
 *.pipe
+.rocketride/

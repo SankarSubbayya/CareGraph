@@ -133,15 +133,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .step-content .step-query { font-family: monospace; font-size: 0.8rem; background: var(--gray-50); padding: 0.4rem 0.6rem; border-radius: 4px; margin-top: 0.5rem; color: var(--gray-700); display: block; }
 .step-content .step-result { font-size: 0.85rem; color: var(--success); font-weight: 600; margin-top: 0.25rem; }
 
-/* Demo Mode */
+/* Demo Mode — small toast at bottom-right, doesn't block content */
 .demo-float-btn { position: fixed; bottom: 2rem; right: 2rem; background: #2563eb; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.4); z-index: 100; }
 .demo-float-btn:hover { background: #1d4ed8; }
-.demo-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 300; }
-.demo-progress { background: white; border-radius: 12px; padding: 2.5rem; width: 90%; max-width: 500px; text-align: center; }
-.demo-progress h2 { margin-bottom: 0.5rem; }
-.demo-progress p { color: #6b7280; margin-bottom: 1.5rem; }
-.demo-progress-bar { background: #e5e7eb; border-radius: 8px; height: 8px; overflow: hidden; }
+.demo-overlay { position: fixed; bottom: 1rem; right: 1rem; width: auto; height: auto; background: none; display: block; z-index: 300; pointer-events: none; }
+.demo-progress { background: white; border-radius: 10px; padding: 0.75rem 1.25rem; width: 320px; text-align: left; box-shadow: 0 4px 20px rgba(0,0,0,0.15); border: 1px solid #e5e7eb; pointer-events: auto; }
+.demo-progress h2 { font-size: 0.9rem; margin-bottom: 0.2rem; }
+.demo-progress p { color: #6b7280; font-size: 0.75rem; margin-bottom: 0.5rem; }
+.demo-progress-bar { background: #e5e7eb; border-radius: 8px; height: 6px; overflow: hidden; }
 .demo-bar-fill { background: #2563eb; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; }
+.demo-progress .btn { padding: 0.2rem 0.6rem; font-size: 0.75rem; }
 
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; }
 .modal-content { background: white; border-radius: var(--radius); padding: 2rem; width: 90%; max-width: 500px; }

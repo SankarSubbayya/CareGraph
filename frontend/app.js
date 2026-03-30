@@ -566,10 +566,9 @@ async function runDemoMode() {
         await new Promise(r => setTimeout(r, 4000));
     }
 
-    title.textContent = 'Demo Complete!';
-    desc.textContent = 'All features demonstrated. CareGraph — Because every senior deserves a daily check-in.';
     bar.style.width = '100%';
     demoRunning = false;
+    overlay.style.display = 'none';
 }
 
 function stopDemo() {

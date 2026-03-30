@@ -1,11 +1,26 @@
-from pydantic_settings import BaseSettings
+from pydantic import AliasChoices, Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    # Neo4j
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    # Neo4j — env: NEO4J_URI, NEO4J_USERNAME (or NEO4J_USER), NEO4J_PASSWORD, NEO4J_DATABASE
     neo4j_uri: str = "bolt://localhost:7687"
-    neo4j_user: str = "neo4j"
+    neo4j_user: str = Field(
+        default="neo4j",
+        validation_alias=AliasChoices("NEO4J_USERNAME", "NEO4J_USER"),
+    )
     neo4j_password: str = ""
+    neo4j_database: str = "neo4j"
+
+    # Neo4j Aura metadata (optional; not used by the driver)
+    aura_instance_id: str = Field(default="", validation_alias="AURA_INSTANCEID")
+    aura_instance_name: str = Field(default="", validation_alias="AURA_INSTANCENAME")
 
     # RocketRide AI
     rocketride_uri: str = "http://localhost:5565"
@@ -22,8 +37,6 @@ class Settings(BaseSettings):
     # App
     base_url: str = "http://localhost:8000"
     skip_auth: bool = True
-
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8", "extra": "ignore"}
 
 
 settings = Settings()

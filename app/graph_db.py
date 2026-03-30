@@ -35,8 +35,16 @@ def get_driver():
             settings.neo4j_uri,
             auth=(settings.neo4j_user, settings.neo4j_password),
         )
-        logger.info("Connected to Neo4j at %s", settings.neo4j_uri)
+        logger.info("Neo4j driver initialized")
     return _driver
+
+
+def _session(driver):
+    """Open a session against the configured database (required for Neo4j Aura)."""
+    db = (settings.neo4j_database or "").strip()
+    if db:
+        return driver.session(database=db)
+    return driver.session()
 
 
 def close_driver():
@@ -49,7 +57,7 @@ def close_driver():
 def run_query(query: str, params: dict | None = None) -> list[dict]:
     """Run a Cypher query and return results as list of dicts."""
     driver = get_driver()
-    with driver.session() as session:
+    with _session(driver) as session:
         result = session.run(query, params or {})
         return [dict(record) for record in result]
 
@@ -57,7 +65,7 @@ def run_query(query: str, params: dict | None = None) -> list[dict]:
 def run_write(query: str, params: dict | None = None) -> None:
     """Run a write Cypher query."""
     driver = get_driver()
-    with driver.session() as session:
+    with _session(driver) as session:
         session.run(query, params or {})
 
 

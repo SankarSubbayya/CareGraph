@@ -48,7 +48,8 @@
             <div class="page-header"><h1>Care Network Graph</h1></div>
             <div class="graph-controls">
                 <select id="graph-senior-select"><option value="">Select a senior...</option></select>
-                <button class="btn btn-primary" onclick="loadGraph()">View Graph</button>
+                <button class="btn btn-primary" onclick="loadGraph()">Care Network</button>
+                <button class="btn" onclick="loadDoctorsGraph()">Doctors Network</button>
             </div>
             <div id="graph-container" class="graph-container"></div>
             <div id="graph-legend" class="graph-legend">
@@ -59,6 +60,8 @@
                 <span class="legend-item"><span class="legend-dot" style="background:#d97706;"></span> Family</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#0d9488;"></span> Service</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#6366f1;"></span> CheckIn</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#0891b2;"></span> Doctor</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#be185d;"></span> Clinic</span>
             </div>
         </div>
 

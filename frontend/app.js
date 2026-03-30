@@ -76,11 +76,13 @@ const NODE_COLORS = {
     Service: { background: '#0d9488', border: '#0f766e', font: { color: '#fff' } },
     CheckIn: { background: '#6366f1', border: '#4f46e5', font: { color: '#fff' } },
     Alert: { background: '#ef4444', border: '#dc2626', font: { color: '#fff' } },
+    Doctor: { background: '#0891b2', border: '#0e7490', font: { color: '#fff' } },
+    Clinic: { background: '#be185d', border: '#9d174d', font: { color: '#fff' } },
 };
 const NODE_SHAPES = {
     Senior: 'circle', Medication: 'box', Symptom: 'diamond',
     Condition: 'triangle', FamilyMember: 'star', Service: 'hexagon',
-    CheckIn: 'dot', Alert: 'square',
+    CheckIn: 'dot', Alert: 'square', Doctor: 'box', Clinic: 'hexagon',
 };
 
 async function loadGraph() {
@@ -125,6 +127,55 @@ async function loadGraph() {
             layout: { improvedLayout: true },
             nodes: { font: { size: 14, face: '-apple-system, sans-serif' }, borderWidth: 2 },
             edges: { smooth: { type: 'continuous' }, length: 250 },
+        };
+
+        const network = new vis.Network(container, { nodes, edges }, options);
+        network.once('stabilizationIterationsDone', () => {
+            network.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+        });
+    } catch(e) { container.innerHTML = `<p class="empty-state">Error: ${e.message}</p>`; }
+}
+
+async function loadDoctorsGraph() {
+    const phone = document.getElementById('graph-senior-select').value;
+    if (!phone) return;
+    const container = document.getElementById('graph-container');
+    container.innerHTML = '<p class="empty-state">Loading doctors network...</p>';
+    try {
+        const data = await fetchJSON(`/api/graph/doctors-network/${encodeURIComponent(phone)}`);
+        if (!data.nodes.length) { container.innerHTML = '<p class="empty-state">No doctors linked to this senior\'s conditions yet.</p>'; return; }
+
+        const nodes = new vis.DataSet(data.nodes.map(n => ({
+            id: n.id,
+            label: n.label,
+            shape: NODE_SHAPES[n.type] || 'dot',
+            color: NODE_COLORS[n.type] || { background: '#6b7280', border: '#4b5563' },
+            font: { color: '#fff', size: n.type === 'Senior' ? 16 : n.type === 'Doctor' ? 12 : 13, bold: n.type === 'Senior' },
+            size: n.type === 'Senior' ? 45 : n.type === 'Doctor' ? 28 : n.type === 'Clinic' ? 25 : 30,
+            title: `${n.type}: ${n.label}`,
+            margin: 10,
+        })));
+
+        const edges = new vis.DataSet(data.edges.map((e, i) => ({
+            id: i,
+            from: e.from,
+            to: e.to,
+            label: e.label,
+            arrows: 'to',
+            color: { color: '#9ca3af', highlight: '#2563eb' },
+            font: { size: 10, color: '#6b7280', strokeWidth: 2, strokeColor: '#fff' },
+        })));
+
+        const options = {
+            physics: {
+                solver: 'forceAtlas2Based',
+                forceAtlas2Based: { gravitationalConstant: -80, springLength: 200, springConstant: 0.02, damping: 0.4 },
+                stabilization: { iterations: 200 },
+            },
+            interaction: { hover: true, tooltipDelay: 100, zoomView: true, dragView: true },
+            layout: { improvedLayout: true },
+            nodes: { font: { size: 12, face: '-apple-system, sans-serif' }, borderWidth: 2 },
+            edges: { smooth: { type: 'continuous' }, length: 200 },
         };
 
         const network = new vis.Network(container, { nodes, edges }, options);

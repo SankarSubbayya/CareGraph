@@ -21,24 +21,92 @@ logger = logging.getLogger(__name__)
 
 BLAND_BASE_URL = "https://api.bland.ai/v1"
 
-CHECKIN_TASK = """You are a friendly, warm care assistant calling to check in on {senior_name}.
-You work for CareGraph, a senior care service. Be patient, speak slowly and clearly.
+CHECKIN_TASK = """You are a friendly, warm care assistant making a daily check-in call on behalf of CareGraph.
+You are calling {senior_name}. Be patient, speak slowly and clearly like you're talking to a loved one.
 
-Your goals for this call:
-1. Ask how they're feeling today (mood and physical wellness)
-2. Ask if they've taken their medications ({medications})
-3. Ask if they have any pain, dizziness, or other symptoms
-4. Ask if they need any services (meals, transportation, companionship, medical appointment)
-5. Listen for any concerns or emergencies
+Start the call by saying this is their daily wellness check-in from CareGraph.
+
+Follow this conversation flow:
+
+1. GREETING & WELLNESS
+   - Ask how they're feeling today — physically and emotionally
+   - Listen carefully for any mention of pain, dizziness, fatigue, or mood changes
+
+2. MEDICATION CHECK
+   - Ask: "Have you taken all your medications today?"
+   - Their medications are: {medications}
+   - If they say no or forgot, gently remind them how important it is and ask if they need help remembering
+   - If they mention side effects (dizziness, nausea, headaches), note it carefully
+
+3. SYMPTOMS & CONCERNS
+   - Ask if they have any new symptoms or health concerns
+   - If they mention chest pain, difficulty breathing, falls, or stroke symptoms — mark it as URGENT and tell them help is on the way
+   - If they seem confused or distressed, be extra gentle and reassuring
+
+4. MEDICAL ASSISTANCE
+   - Ask: "Do you need help scheduling a doctor's appointment?"
+   - If yes, ask what kind of doctor they need
+   - You have access to a network of doctors. Here are some you can recommend:
+     {doctors}
+   - If they need a dermatologist, recommend one from the list
+   - If they need a primary care doctor, recommend one near their area
+   - Provide the doctor's name and phone number
+   - Let them know CareGraph can help coordinate with their family to schedule the visit
+   - If they mention wanting a second opinion or specialist, note that as a service request
+
+5. OTHER NEEDS
+   - Ask if they need any help today — meals, transportation, companionship, or anything else
+   - Listen for signs of loneliness (living alone, nobody visits, feeling isolated)
 
 Important rules:
-- Be warm, conversational, and empathetic — not robotic
-- If they mention chest pain, difficulty breathing, falls, or stroke symptoms, mark it as urgent
-- If they seem confused or distressed, be extra gentle
-- Keep the call under 3 minutes
-- End by saying their family cares about them and to call back anytime
+- Be warm, conversational, and empathetic — never robotic or rushed
+- Call them by their first name
+- If they seem to want to chat, let them talk — don't cut them off
+- Keep the call under 4 minutes unless they need more time
+- End by saying: "Your family cares about you, and so do we at CareGraph. Don't hesitate to call if you need anything."
 
-After the call, provide a summary of their mood, symptoms, medication adherence, and any concerns."""
+After the call, provide a summary of: mood, medication adherence, symptoms, doctor/medical needs, and any concerns."""
+
+
+def _get_doctors_for_call() -> str:
+    """Fetch top doctors from Neo4j to include in call task."""
+    try:
+        from app.graph_db import get_driver
+        driver = get_driver()
+        lines = []
+        with driver.session() as session:
+            # Top-rated primary care doctors with senior health interest
+            result = session.run("""
+                MATCH (d:Doctor)
+                WHERE d.rating IS NOT NULL AND d.rating >= 4.8
+                  AND d.phone IS NOT NULL AND d.accepting_patients = true
+                RETURN d.name AS name, d.specialty AS specialty, d.phone AS phone,
+                       d.city AS city, d.rating AS rating, d.senior_care AS senior_care
+                ORDER BY d.senior_care DESC, d.rating DESC
+                LIMIT 5
+            """)
+            for r in result:
+                senior_tag = " [Senior Care Specialist]" if r["senior_care"] else ""
+                lines.append(f"- {r['name']} ({r['specialty']}) in {r['city'] or 'Bay Area'}, "
+                             f"Rating: {r['rating']}/5, Phone: {r['phone']}{senior_tag}")
+
+            # Top dermatologists
+            result = session.run("""
+                MATCH (d:Doctor)
+                WHERE d.specialty CONTAINS 'Dermatology'
+                  AND d.rating IS NOT NULL AND d.rating >= 4.9
+                  AND d.accepting_patients = true
+                RETURN d.name AS name, d.phone AS phone, d.rating AS rating
+                ORDER BY d.rating DESC
+                LIMIT 3
+            """)
+            for r in result:
+                lines.append(f"- {r['name']} (Dermatologist), Rating: {r['rating']}/5, Phone: {r['phone']}")
+
+        return "\n     ".join(lines) if lines else "No doctors available in the system yet."
+    except Exception as e:
+        logger.warning("Failed to fetch doctors from Neo4j: %s", e)
+        return "Doctor directory currently unavailable."
 
 
 async def _bland_request(method: str, path: str, **kwargs) -> dict:
@@ -98,7 +166,10 @@ async def make_checkin_call(
     """
     meds_str = ", ".join(medications) if medications else "none currently listed"
 
-    task = CHECKIN_TASK.format(senior_name=senior_name, medications=meds_str)
+    # Fetch recommended doctors from Neo4j graph
+    doctors_str = _get_doctors_for_call()
+
+    task = CHECKIN_TASK.format(senior_name=senior_name, medications=meds_str, doctors=doctors_str)
 
     payload: dict[str, Any] = {
         "phone_number": phone_number,
@@ -129,9 +200,9 @@ async def make_checkin_call(
     if first_sentence:
         payload["first_sentence"] = first_sentence
     else:
-        payload["first_sentence"] = f"Hi {senior_name}, this is your care assistant from CareGraph. How are you doing today?"
+        payload["first_sentence"] = f"Good morning {senior_name}! This is your daily check-in call from CareGraph. How are you feeling today?"
 
-    if webhook_url:
+    if webhook_url and webhook_url.startswith("https://"):
         payload["webhook"] = webhook_url
 
     return await _bland_request("POST", "/calls", json=payload)

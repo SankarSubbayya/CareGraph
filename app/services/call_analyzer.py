@@ -33,6 +33,7 @@ SERVICE_PATTERNS = {
     "medical_emergency": {"phrases": ["chest pain", "can't breathe", "stroke", "heart attack", "ambulance", "911", "bleeding badly"], "label": "Medical Emergency", "urgency": "critical"},
     "transportation": {"phrases": ["ride", "drive", "appointment", "doctor visit", "need a ride"], "label": "Transportation"},
     "companionship": {"phrases": ["lonely", "alone", "no one", "nobody", "visit me"], "label": "Companionship / Social"},
+    "doctor_appointment": {"phrases": ["doctor", "see a doctor", "schedule doctor", "need a doctor", "specialist", "cardiologist", "eye doctor", "dentist", "second opinion", "medical help", "checkup", "check-up"], "label": "Doctor Appointment", "urgency": "high"},
 }
 
 

@@ -47,7 +47,7 @@ async def initiate_checkin_call(phone: str, voice: str = "June"):
     )
 
     if result.get("status") == "error":
-        raise HTTPException(status_code=502, detail=result.get("message", "Bland AI call failed"))
+        return {"status": "error", "senior": senior["name"], "phone": phone, "message": result.get("message", "Bland AI call failed")}
 
     return {
         "status": "call_initiated",
@@ -119,6 +119,66 @@ async def stop_active_call(call_id: str):
 async def recent_calls(limit: int = 20):
     """List recent Bland AI calls."""
     return await list_calls(limit)
+
+
+@router.post("/process/{call_id}")
+async def process_completed_call(call_id: str, phone: str):
+    """Fetch a completed Bland AI call transcript and process it into the Neo4j graph.
+
+    Use this when webhooks can't reach localhost — manually trigger processing
+    after a call completes.
+    """
+    # Fetch call details from Bland AI
+    call_data = await get_call_details(call_id)
+    if not call_data or call_data.get("status") == "error":
+        raise HTTPException(status_code=404, detail="Call not found on Bland AI")
+
+    transcript = call_data.get("concatenated_transcript", "")
+    if not transcript:
+        return {"status": "skipped", "reason": "No transcript available yet. Call may still be in progress."}
+
+    senior = get_senior(phone)
+    if not senior:
+        raise HTTPException(status_code=404, detail="Senior not found")
+
+    # Process transcript through analysis pipeline
+    analysis = analyze_transcript(transcript)
+    now = datetime.now(timezone.utc).isoformat()
+
+    checkin_key = store_checkin(
+        senior_phone=phone,
+        call_id=f"bland_{call_id}",
+        timestamp=now,
+        transcript=transcript,
+        mood=analysis["mood"],
+        wellness_score=analysis["wellness_score"],
+        medication_taken=analysis["medication_taken"],
+        concerns=analysis["concerns"],
+        service_requests=analysis["service_requests"],
+        summary=analysis["summary"],
+    )
+
+    # Evaluate for alerts
+    checkin_data = {
+        "senior_phone": phone,
+        "mood": analysis["mood"],
+        "wellness_score": analysis["wellness_score"],
+        "medication_taken": analysis["medication_taken"],
+        "concerns": analysis["concerns"],
+        "service_requests": analysis["service_requests"],
+    }
+    alerts = evaluate_checkin(checkin_data, senior["name"])
+
+    return {
+        "status": "processed",
+        "call_id": call_id,
+        "senior": senior["name"],
+        "phone": phone,
+        "checkin_key": checkin_key,
+        "transcript": transcript,
+        "analysis": analysis,
+        "alerts_generated": len(alerts),
+    }
 
 
 # ---------------------------------------------------------------------------

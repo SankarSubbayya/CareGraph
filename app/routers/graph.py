@@ -113,3 +113,47 @@ async def by_symptom(symptom: str):
 async def by_medication(medication: str):
     """Find all seniors taking a specific medication."""
     return get_seniors_by_medication(medication)
+
+
+@router.get("/doctors")
+async def list_doctors(specialty: str = "", city: str = "", limit: int = 20):
+    """Query doctors from the Neo4j knowledge graph."""
+    from app.graph_db import get_driver
+    driver = get_driver()
+    with driver.session() as session:
+        query = "MATCH (d:Doctor) WHERE d.accepting_patients = true"
+        params = {"limit": limit}
+        if specialty:
+            query += " AND toLower(d.specialty) CONTAINS toLower($specialty)"
+            params["specialty"] = specialty
+        if city:
+            query += " AND toLower(d.city) CONTAINS toLower($city)"
+            params["city"] = city
+        query += " RETURN d ORDER BY d.rating DESC LIMIT $limit"
+        result = session.run(query, **params)
+        doctors = []
+        for r in result:
+            d = dict(r["d"])
+            doctors.append(d)
+    return {"doctors": doctors, "total": len(doctors)}
+
+
+@router.get("/doctors/for-senior/{phone}")
+async def doctors_for_senior(phone: str):
+    """Find recommended doctors for a senior based on their conditions."""
+    from app.graph_db import get_driver
+    driver = get_driver()
+    with driver.session() as session:
+        # Doctors linked via conditions
+        result = session.run("""
+            MATCH (s:Senior {phone: $phone})-[:REPORTED]->(:Symptom)-[:SUGGESTS]->(c:Condition)<-[:CAN_TREAT]-(d:Doctor)
+            WHERE d.accepting_patients = true
+            RETURN DISTINCT d.name AS name, d.specialty AS specialty, d.phone AS phone,
+                   d.city AS city, d.rating AS rating, d.senior_care AS senior_care,
+                   collect(DISTINCT c.name) AS conditions
+            ORDER BY d.senior_care DESC, d.rating DESC
+            LIMIT 10
+        """, phone=phone)
+        doctors = [dict(r) for r in result]
+
+    return {"phone": phone, "recommended_doctors": doctors}

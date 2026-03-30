@@ -99,9 +99,10 @@ async function loadGraph() {
             label: n.label,
             shape: NODE_SHAPES[n.type] || 'dot',
             color: NODE_COLORS[n.type] || { background: '#6b7280', border: '#4b5563' },
-            font: NODE_COLORS[n.type]?.font || { color: '#fff' },
-            size: n.type === 'Senior' ? 35 : 25,
+            font: { color: '#fff', size: n.type === 'Senior' ? 16 : 13, bold: n.type === 'Senior' },
+            size: n.type === 'Senior' ? 45 : 30,
             title: `${n.type}: ${n.label}`,
+            margin: 10,
         })));
 
         const edges = new vis.DataSet(data.edges.map((e, i) => ({
@@ -117,14 +118,19 @@ async function loadGraph() {
         const options = {
             physics: {
                 solver: 'forceAtlas2Based',
-                forceAtlas2Based: { gravitationalConstant: -40, springLength: 150 },
-                stabilization: { iterations: 100 },
+                forceAtlas2Based: { gravitationalConstant: -120, springLength: 250, springConstant: 0.02, damping: 0.4 },
+                stabilization: { iterations: 200 },
             },
-            interaction: { hover: true, tooltipDelay: 100 },
+            interaction: { hover: true, tooltipDelay: 100, zoomView: true, dragView: true },
             layout: { improvedLayout: true },
+            nodes: { font: { size: 14, face: '-apple-system, sans-serif' }, borderWidth: 2 },
+            edges: { smooth: { type: 'continuous' }, length: 250 },
         };
 
-        new vis.Network(container, { nodes, edges }, options);
+        const network = new vis.Network(container, { nodes, edges }, options);
+        network.once('stabilizationIterationsDone', () => {
+            network.fit({ animation: { duration: 500, easingFunction: 'easeInOutQuad' } });
+        });
     } catch(e) { container.innerHTML = `<p class="empty-state">Error: ${e.message}</p>`; }
 }
 
@@ -191,13 +197,17 @@ async function initiateCall() {
     el.innerHTML = '<div class="status-card calling"><span class="pulse"></span> Initiating call...</div>';
     try {
         const data = await fetchJSON(`/api/voice/call/${encodeURIComponent(phone)}?voice=${voice}`, { method: 'POST' });
-        el.innerHTML = `<div class="status-card success">
-            <strong>Call initiated!</strong><br>
-            Senior: ${data.senior}<br>
-            Call ID: <code>${data.call_id}</code><br>
-            Status: ${data.message}
-        </div>`;
-        setTimeout(loadRecentCalls, 3000);
+        if (data.status === 'error') {
+            el.innerHTML = `<div class="status-card error"><strong>Call failed for ${data.senior}</strong><br>${data.message}<br><br><em>Note: Demo phone numbers (+1415555xxxx) are not real. Use a real phone number to test Bland AI calls.</em></div>`;
+        } else {
+            el.innerHTML = `<div class="status-card success">
+                <strong>Call initiated!</strong><br>
+                Senior: ${data.senior}<br>
+                Call ID: <code>${data.call_id}</code><br>
+                Status: ${data.message}
+            </div>`;
+            setTimeout(loadRecentCalls, 3000);
+        }
     } catch(e) { el.innerHTML = `<div class="status-card error">Failed: ${e.message}</div>`; }
 }
 
@@ -218,6 +228,7 @@ async function callAllSeniors() {
 
 async function loadRecentCalls() {
     const el = document.getElementById('voice-calls-list');
+    const phone = document.getElementById('voice-senior-select').value;
     try {
         const data = await fetchJSON('/api/voice/calls?limit=10');
         const calls = data.calls || data;
@@ -230,10 +241,30 @@ async function loadRecentCalls() {
             <div class="call-meta">
                 ${c.call_length ? `Duration: ${c.call_length} min` : ''}
                 ${c.created_at ? ` | ${new Date(c.created_at).toLocaleString()}` : ''}
+                ${c.call_id ? ` | ID: ${c.call_id}` : ''}
             </div>
-            ${c.summary ? `<div class="call-summary">${c.summary}</div>` : ''}
+            ${c.concatenated_transcript ? `<div class="call-summary"><strong>Transcript:</strong> ${c.concatenated_transcript.substring(0, 300)}${c.concatenated_transcript.length > 300 ? '...' : ''}</div>` : ''}
+            ${c.summary ? `<div class="call-summary"><strong>Summary:</strong> ${c.summary}</div>` : ''}
+            ${c.status === 'completed' && phone ? `<button class="btn btn-small btn-primary" onclick="processCall('${c.call_id}', '${phone}')" style="margin-top:0.5rem;">Save to Graph</button>` : ''}
         </div>`).join('');
     } catch(e) { el.innerHTML = '<p class="empty-state">Could not load calls. Is BLAND_API_KEY set?</p>'; }
+}
+
+async function processCall(callId, phone) {
+    const el = document.getElementById('voice-status');
+    el.innerHTML = '<div class="status-card calling"><span class="pulse"></span> Processing call into graph...</div>';
+    try {
+        const data = await fetchJSON(`/api/voice/process/${callId}?phone=${encodeURIComponent(phone)}`, { method: 'POST' });
+        el.innerHTML = `<div class="status-card success">
+            <strong>Call processed into Neo4j graph!</strong><br>
+            Senior: ${data.senior}<br>
+            Mood: ${data.analysis.mood} | Wellness: ${data.analysis.wellness_score}/10 | Meds: ${data.analysis.medication_taken === true ? 'Taken' : data.analysis.medication_taken === false ? 'Missed' : 'Unknown'}<br>
+            ${data.analysis.concerns.length ? `Concerns: ${data.analysis.concerns.join(', ')}<br>` : ''}
+            ${data.analysis.service_requests.length ? `Services: ${data.analysis.service_requests.map(r => r.label).join(', ')}<br>` : ''}
+            Alerts generated: ${data.alerts_generated}
+        </div>`;
+        loadSeniors();
+    } catch(e) { el.innerHTML = `<div class="status-card error">Failed: ${e.message}</div>`; }
 }
 
 // ── CrewAI Agents ──

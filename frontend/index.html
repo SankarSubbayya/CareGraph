@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareGraph — Graph-Powered Senior Care</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+</head>
+<body>
+    <nav class="sidebar">
+        <div class="sidebar-logo"><span class="logo-icon">🔗</span><span class="logo-text">CareGraph</span></div>
+        <div class="sidebar-label">MENU</div>
+        <a href="#" class="sidebar-item active" onclick="showPage('seniors')"><span class="sidebar-icon">👥</span> Seniors</a>
+        <a href="#" class="sidebar-item" onclick="showPage('graph')"><span class="sidebar-icon">🔗</span> Graph View</a>
+        <a href="#" class="sidebar-item" onclick="showPage('insights')"><span class="sidebar-icon">🧠</span> AI Insights</a>
+        <a href="#" class="sidebar-item" onclick="showPage('alerts')"><span class="sidebar-icon">🔔</span> Alerts <span id="alert-badge" class="nav-badge" style="display:none;">0</span></a>
+        <a href="#" class="sidebar-item" onclick="showPage('simulate')"><span class="sidebar-icon">📞</span> Simulate Call</a>
+    </nav>
+
+    <div class="main-content">
+        <!-- Alerts Banner -->
+        <div id="alerts-banner" class="alerts-banner" style="display:none;"><div id="alerts-banner-content"></div></div>
+
+        <!-- Page: Seniors -->
+        <div id="page-seniors" class="page active">
+            <div class="page-header">
+                <h1>Seniors</h1>
+                <button class="btn btn-primary" onclick="showAddModal()">+ Add Senior</button>
+            </div>
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-label">Total seniors</div><div class="stat-value" id="stat-total">0</div></div>
+                <div class="stat-card"><div class="stat-label">Active alerts</div><div class="stat-value stat-orange" id="stat-alerts">0</div></div>
+                <div class="stat-card"><div class="stat-label">Avg. wellness</div><div class="stat-value" id="stat-avg">—/10</div></div>
+                <div class="stat-card"><div class="stat-label">Graph nodes</div><div class="stat-value stat-green" id="stat-nodes">—</div></div>
+            </div>
+            <div class="table-container">
+                <table class="data-table"><thead><tr><th>NAME</th><th>STATUS</th><th>SCORE</th><th>MEDICATIONS</th><th>ACTIONS</th></tr></thead>
+                <tbody id="seniors-tbody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody></table>
+            </div>
+        </div>
+
+        <!-- Page: Graph View -->
+        <div id="page-graph" class="page">
+            <div class="page-header"><h1>Care Network Graph</h1></div>
+            <div class="graph-controls">
+                <select id="graph-senior-select"><option value="">Select a senior...</option></select>
+                <button class="btn btn-primary" onclick="loadGraph()">View Graph</button>
+            </div>
+            <div id="graph-container" class="graph-container"></div>
+        </div>
+
+        <!-- Page: AI Insights -->
+        <div id="page-insights" class="page">
+            <div class="page-header"><h1>AI Insights (RocketRide)</h1></div>
+            <div class="graph-controls">
+                <select id="insight-senior-select"><option value="">Select a senior...</option></select>
+                <button class="btn" onclick="loadDrugInteractions()">Drug Interactions</button>
+                <button class="btn" onclick="loadSideEffects()">Side Effects</button>
+                <button class="btn" onclick="loadSimilarSymptoms()">Similar Symptoms</button>
+                <button class="btn btn-primary" onclick="loadCareRec()">AI Care Plan</button>
+            </div>
+            <div id="insights-content" class="insights-content"></div>
+        </div>
+
+        <!-- Page: Alerts -->
+        <div id="page-alerts" class="page">
+            <div class="page-header"><h1>Alerts</h1></div>
+            <div id="alerts-full-list"></div>
+        </div>
+
+        <!-- Page: Simulate Call -->
+        <div id="page-simulate" class="page">
+            <div class="page-header"><h1>Simulate Check-in</h1></div>
+            <div class="simulate-form">
+                <select id="sim-senior-select"><option value="">Select a senior...</option></select>
+                <textarea id="sim-transcript" rows="4" placeholder="Type what the senior said... e.g. 'I fell yesterday. My hip hurts. I forgot my medications.'"></textarea>
+                <button class="btn btn-primary" onclick="simulateCall()">Simulate</button>
+            </div>
+            <div id="sim-result"></div>
+        </div>
+    </div>
+
+    <!-- Add Senior Modal -->
+    <div id="add-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <h2>Add a Senior</h2>
+            <form id="add-form" onsubmit="addSenior(event)">
+                <label>Name <input type="text" id="s-name" required placeholder="Margaret Johnson"></label>
+                <label>Phone <input type="tel" id="s-phone" required placeholder="+14155551234"></label>
+                <label>Medications (comma-separated) <input type="text" id="s-meds" placeholder="Metformin 500mg, Lisinopril 10mg"></label>
+                <label>Check-in Time <input type="time" id="s-schedule" value="09:00"></label>
+                <label>Notes <textarea id="s-notes" placeholder="Additional notes..."></textarea></label>
+                <div class="modal-actions">
+                    <button type="button" class="btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

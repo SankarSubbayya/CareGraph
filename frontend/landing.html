@@ -104,6 +104,11 @@
         .cta .btn-hero.primary { background: white; color: #2563eb; }
         .cta .btn-hero.primary:hover { background: #f0f0f0; }
 
+        .live-stats { padding: 5rem 2rem; background: #eff6ff; }
+        .live-stat-card { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 2rem; }
+        .live-stat-num { font-size: 3rem; font-weight: 800; color: #2563eb; }
+        .live-stat-label { font-size: 0.9rem; color: #6b7280; margin-top: 0.25rem; }
+
         @media (max-width: 768px) {
             .hero h1 { font-size: 2.2rem; }
             .problem-grid, .tech-grid, .impact-grid { grid-template-columns: 1fr; }
@@ -282,12 +287,35 @@
     </div>
 </section>
 
+<!-- Live Stats -->
+<section class="live-stats" id="stats">
+    <div class="container" style="max-width:1000px;margin:0 auto;text-align:center;">
+        <div class="section-label" style="color:#2563eb;">Live from Neo4j</div>
+        <h2 style="font-size:2.5rem;font-weight:700;margin-bottom:2rem;">CareGraph Knowledge Graph</h2>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;">
+            <div class="live-stat-card"><div class="live-stat-num" id="ls-seniors">—</div><div class="live-stat-label">Seniors</div></div>
+            <div class="live-stat-card"><div class="live-stat-num" id="ls-doctors">—</div><div class="live-stat-label">Doctors</div></div>
+            <div class="live-stat-card"><div class="live-stat-num" id="ls-nodes">—</div><div class="live-stat-label">Graph Nodes</div></div>
+            <div class="live-stat-card"><div class="live-stat-num" id="ls-edges">—</div><div class="live-stat-label">Relationships</div></div>
+        </div>
+    </div>
+</section>
+
 <!-- CTA -->
 <section class="cta">
     <h2>Because every senior deserves a daily check-in</h2>
     <p>CareGraph — Graph-powered senior care intelligence</p>
     <a href="/dashboard" class="btn-hero primary">Open Dashboard</a>
 </section>
+
+<script>
+fetch('/api/graph/stats').then(r=>r.json()).then(d=>{
+    document.getElementById('ls-seniors').textContent=d.seniors;
+    document.getElementById('ls-doctors').textContent=d.doctors;
+    document.getElementById('ls-nodes').textContent=d.nodes+'+';
+    document.getElementById('ls-edges').textContent=d.edges+'+';
+}).catch(()=>{});
+</script>
 
 </body>
 </html>

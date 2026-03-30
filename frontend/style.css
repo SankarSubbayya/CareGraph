@@ -111,6 +111,16 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .crew-output h3 { margin-bottom: 0.75rem; }
 .crew-output pre { white-space: pre-wrap; font-size: 0.8rem; line-height: 1.5; max-height: 500px; overflow-y: auto; }
 
+/* Demo Mode */
+.demo-float-btn { position: fixed; bottom: 2rem; right: 2rem; background: #2563eb; color: white; border: none; padding: 0.75rem 1.5rem; border-radius: 25px; font-size: 1rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(37,99,235,0.4); z-index: 100; }
+.demo-float-btn:hover { background: #1d4ed8; }
+.demo-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center; z-index: 300; }
+.demo-progress { background: white; border-radius: 12px; padding: 2.5rem; width: 90%; max-width: 500px; text-align: center; }
+.demo-progress h2 { margin-bottom: 0.5rem; }
+.demo-progress p { color: #6b7280; margin-bottom: 1.5rem; }
+.demo-progress-bar { background: #e5e7eb; border-radius: 8px; height: 8px; overflow: hidden; }
+.demo-bar-fill { background: #2563eb; height: 100%; width: 0%; transition: width 0.5s ease; border-radius: 8px; }
+
 .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 200; }
 .modal-content { background: white; border-radius: var(--radius); padding: 2rem; width: 90%; max-width: 500px; }
 .modal-content h2 { margin-bottom: 1rem; }

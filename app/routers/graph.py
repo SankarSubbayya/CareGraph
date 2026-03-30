@@ -21,6 +21,21 @@ from app.services.rocketride import (
 router = APIRouter(prefix="/api/graph", tags=["graph"])
 
 
+@router.get("/stats")
+async def graph_stats():
+    from app.graph_db import get_driver
+    driver = get_driver()
+    with driver.session() as session:
+        seniors = session.run("MATCH (s:Senior) RETURN count(s) AS c").single()["c"]
+        doctors = session.run("MATCH (d:Doctor) RETURN count(d) AS c").single()["c"]
+        nodes = session.run("MATCH (n) RETURN count(n) AS c").single()["c"]
+        edges = session.run("MATCH ()-[r]->() RETURN count(r) AS c").single()["c"]
+        alerts = session.run("MATCH (a:Alert) WHERE a.acknowledged IS NULL OR a.acknowledged = false RETURN count(a) AS c").single()["c"]
+        medications = session.run("MATCH (m:Medication) RETURN count(m) AS c").single()["c"]
+        clinics = session.run("MATCH (c:Clinic) RETURN count(c) AS c").single()["c"]
+    return {"seniors": seniors, "doctors": doctors, "nodes": nodes, "edges": edges, "alerts": alerts, "medications": medications, "clinics": clinics}
+
+
 @router.get("/care-network/{phone}")
 async def care_network(phone: str):
     """Get the full care network graph for visualization."""

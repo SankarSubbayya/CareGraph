@@ -422,4 +422,49 @@ async function populateSelects() {
     } catch(e) {}
 }
 
+// ── Demo Mode ──
+let demoRunning = false;
+
+async function runDemoMode() {
+    if (demoRunning) return;
+    demoRunning = true;
+    const overlay = document.getElementById('demo-overlay');
+    const title = document.getElementById('demo-step-title');
+    const desc = document.getElementById('demo-step-desc');
+    const bar = document.getElementById('demo-bar');
+    overlay.style.display = 'flex';
+
+    const steps = [
+        { page: 'seniors', title: 'Dashboard Overview', desc: 'Showing all registered seniors, wellness scores, and active alerts.', pct: 15 },
+        { page: 'graph', title: 'Care Network Graph', desc: 'Loading Dorothy Williams care network — medications, symptoms, family.', pct: 30, action: async () => { document.getElementById('graph-senior-select').value = '+14155551003'; await loadGraph(); } },
+        { page: 'graph', title: 'Doctors Network', desc: 'Switching to doctors view — symptoms → conditions → 110+ doctors → clinics.', pct: 45, action: async () => { await loadDoctorsGraph(); } },
+        { page: 'insights', title: 'AI Drug Interactions', desc: 'Querying Neo4j for Margaret\'s drug interactions + Qwen3-235B explanations.', pct: 55, action: async () => { document.getElementById('insight-senior-select').value = '+14155551001'; await loadDrugInteractions(); } },
+        { page: 'insights', title: 'AI Care Plan', desc: 'Generating personalized care plan with GMI Cloud (Qwen3-235B).', pct: 70, action: async () => { document.getElementById('insight-senior-select').value = '+14155551003'; await loadCareRec(); } },
+        { page: 'simulate', title: 'Emergency Simulation', desc: 'Simulating: "I fell and feel dizzy. I forgot my medications. I need a doctor."', pct: 85, action: async () => { document.getElementById('sim-senior-select').value = '+14155551001'; document.getElementById('sim-transcript').value = 'I fell and feel dizzy. I forgot my medications. I need to see a doctor.'; await simulateCall(); } },
+        { page: 'alerts', title: 'Alerts Dashboard', desc: 'Showing all triggered alerts — critical, high, and medium severity.', pct: 95 },
+        { page: 'crew', title: 'CrewAI Agents', desc: 'Five AI agents ready: Check-in → Analysis → Graph → Recommendation → Alert.', pct: 100 },
+    ];
+
+    for (const step of steps) {
+        if (!demoRunning) break;
+        title.textContent = step.title;
+        desc.textContent = step.desc;
+        bar.style.width = step.pct + '%';
+        showPage(step.page);
+        await populateSelects();
+        if (step.action) await step.action();
+        await new Promise(r => setTimeout(r, 4000));
+    }
+
+    title.textContent = 'Demo Complete!';
+    desc.textContent = 'All features demonstrated. CareGraph — Because every senior deserves a daily check-in.';
+    bar.style.width = '100%';
+    demoRunning = false;
+}
+
+function stopDemo() {
+    demoRunning = false;
+    document.getElementById('demo-overlay').style.display = 'none';
+}
+
 document.addEventListener('DOMContentLoaded', () => { loadSeniors(); setInterval(loadSeniors, 15000); });

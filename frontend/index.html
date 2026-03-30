@@ -142,6 +142,16 @@
             </div>
             <div id="sim-result"></div>
         </div>
+        <!-- Demo Mode Button -->
+        <button id="demo-btn" class="demo-float-btn" onclick="runDemoMode()">▶ Run Demo</button>
+        <div id="demo-overlay" class="demo-overlay" style="display:none;">
+            <div class="demo-progress">
+                <h2 id="demo-step-title">Starting Demo...</h2>
+                <p id="demo-step-desc"></p>
+                <div class="demo-progress-bar"><div id="demo-bar" class="demo-bar-fill"></div></div>
+                <button class="btn" onclick="stopDemo()" style="margin-top:1rem;">Stop Demo</button>
+            </div>
+        </div>
     </div>
 
     <!-- Add Senior Modal -->

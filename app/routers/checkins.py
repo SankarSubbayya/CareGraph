@@ -60,4 +60,5 @@ async def simulate_checkin(phone: str, transcript: str = "I'm feeling good today
         "checkin_key": checkin_key,
         "analysis": analysis,
         "alerts": len(alerts),
+        "alert_details": alerts,
     }

@@ -14,6 +14,7 @@
         <div class="sidebar-label">MENU</div>
         <a href="#" class="sidebar-item active" onclick="showPage('seniors')"><span class="sidebar-icon">👥</span> Seniors</a>
         <a href="#" class="sidebar-item" onclick="showPage('graph')"><span class="sidebar-icon">🔗</span> Graph View</a>
+        <a href="#" class="sidebar-item" onclick="showPage('reasoning')"><span class="sidebar-icon">🧩</span> Graph Reasoning</a>
         <a href="#" class="sidebar-item" onclick="showPage('insights')"><span class="sidebar-icon">🧠</span> AI Insights</a>
         <a href="#" class="sidebar-item" onclick="showPage('voice')"><span class="sidebar-icon">📞</span> Voice Calls</a>
         <a href="#" class="sidebar-item" onclick="showPage('crew')"><span class="sidebar-icon">🤖</span> CrewAI Agents</a>
@@ -63,6 +64,18 @@
                 <span class="legend-item"><span class="legend-dot" style="background:#0891b2;"></span> Doctor</span>
                 <span class="legend-item"><span class="legend-dot" style="background:#be185d;"></span> Clinic</span>
             </div>
+        </div>
+
+        <!-- Page: Graph Reasoning Walkthrough -->
+        <div id="page-reasoning" class="page">
+            <div class="page-header"><h1>Graph Reasoning Walkthrough</h1></div>
+            <div class="graph-controls">
+                <select id="reasoning-senior-select"><option value="">Select a senior...</option></select>
+                <button class="btn btn-primary" onclick="startReasoning()">Start Walkthrough</button>
+                <button class="btn" onclick="resetReasoning()">Reset</button>
+            </div>
+            <div id="reasoning-steps" class="reasoning-steps"></div>
+            <div id="reasoning-graph" class="graph-container" style="height:400px;"></div>
         </div>
 
         <!-- Page: AI Insights -->

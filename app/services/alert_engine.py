@@ -1,4 +1,8 @@
-"""Alert engine — evaluate check-in data and generate alerts."""
+"""Alert engine — evaluate check-in data and generate alerts.
+
+When alerts fire, looks up the senior's emergency contacts from Neo4j
+and includes notification targets in the alert response.
+"""
 
 from __future__ import annotations
 
@@ -8,6 +12,21 @@ from datetime import datetime, timezone
 from app.graph_db import store_alert
 
 logger = logging.getLogger(__name__)
+
+
+def _get_family_contacts(senior_phone: str) -> list[dict]:
+    """Look up emergency contacts for a senior from Neo4j."""
+    try:
+        from app.graph_db import get_driver
+        driver = get_driver()
+        with driver.session() as session:
+            result = session.run("""
+                MATCH (s:Senior {phone: $phone})-[:HAS_CONTACT]->(f:FamilyMember)
+                RETURN f.name AS name, f.phone AS phone, f.relation AS relation
+            """, phone=senior_phone)
+            return [dict(r) for r in result]
+    except Exception:
+        return []
 
 
 def evaluate_checkin(checkin: dict, senior_name: str = "") -> list[dict]:
@@ -51,8 +70,24 @@ def evaluate_checkin(checkin: dict, senior_name: str = "") -> list[dict]:
                  "message": f"{who} requested help: {svc.get('label', svc_type)}. {svc.get('details', '')}"}
         alerts.append(alert)
 
-    # Store in Neo4j
+    # Look up family contacts to notify
+    contacts = _get_family_contacts(phone) if alerts else []
+
+    # Store in Neo4j and add notification info
     for a in alerts:
+        # Add who gets notified based on severity
+        if a["severity"] == "critical":
+            a["notify"] = contacts  # Notify ALL contacts for emergencies
+        elif a["severity"] == "high":
+            a["notify"] = contacts[:1]  # Primary contact for high severity
+        else:
+            a["notify"] = []  # Medium/low — dashboard only
+
+        if a["notify"]:
+            names = ", ".join(f"{c['name']} ({c['relation']})" for c in a["notify"])
+            a["notification_message"] = f"Notifying: {names}"
+            logger.warning("NOTIFY %s for %s: %s", names, a["senior_name"], a["message"])
+
         try:
             store_alert(a["id"], a["senior_phone"], a["senior_name"],
                        a["timestamp"], a["alert_type"], a["severity"], a["message"])

@@ -15,7 +15,7 @@ function showPage(id) {
     const page = document.getElementById('page-' + id);
     if (page) page.classList.add('active');
     document.querySelectorAll('.sidebar-item').forEach(i => { if (i.textContent.trim().toLowerCase().includes(id)) i.classList.add('active'); });
-    if (['graph', 'insights', 'simulate', 'voice', 'crew'].includes(id)) populateSelects();
+    if (['graph', 'insights', 'simulate', 'voice', 'crew', 'reasoning'].includes(id)) populateSelects();
     if (id === 'alerts') loadAlertsPage();
     if (id === 'voice') loadRecentCalls();
 }
@@ -376,6 +376,17 @@ async function simulateCall() {
             ${data.analysis.concerns.length ? `<div style="margin-top:1rem;"><strong>Concerns:</strong> ${data.analysis.concerns.join(', ')}</div>` : ''}
             ${data.analysis.service_requests.length ? `<div style="margin-top:0.5rem;"><strong>Service Needs:</strong> ${data.analysis.service_requests.map(r => r.label).join(', ')}</div>` : ''}
             <div style="margin-top:0.5rem;color:var(--gray-500);font-size:0.85rem;">${data.analysis.summary}</div>
+            ${data.alert_details && data.alert_details.length ? `
+                <div class="notify-section">
+                    <h4>Alerts & Family Notifications</h4>
+                    ${data.alert_details.map(a => `
+                        <div class="notify-card ${a.severity}">
+                            <span class="severity ${a.severity}">${a.severity}</span>
+                            <span>${a.message}</span>
+                            ${a.notify && a.notify.length ? `<div class="notify-target">📱 Notifying: ${a.notify.map(c => `${c.name} (${c.relation}) — ${c.phone}`).join(', ')}</div>` : '<div class="notify-target">📋 Dashboard only</div>'}
+                        </div>
+                    `).join('')}
+                </div>` : ''}
         </div>`;
         loadSeniors();
     } catch(e) { el.innerHTML = `<div class="status-card error">Error: ${e.message}</div>`; }
@@ -412,7 +423,7 @@ async function ackAlert(id) { await fetchJSON(`/api/alerts/${encodeURIComponent(
 async function populateSelects() {
     try {
         const seniors = await fetchJSON('/api/seniors');
-        ['graph-senior-select', 'insight-senior-select', 'sim-senior-select', 'voice-senior-select', 'crew-senior-select'].forEach(id => {
+        ['graph-senior-select', 'insight-senior-select', 'sim-senior-select', 'voice-senior-select', 'crew-senior-select', 'reasoning-senior-select'].forEach(id => {
             const sel = document.getElementById(id);
             if (!sel) return;
             const current = sel.value;
@@ -420,6 +431,105 @@ async function populateSelects() {
             if (current) sel.value = current;
         });
     } catch(e) {}
+}
+
+// ── Graph Reasoning Walkthrough ──
+let reasoningNetwork = null;
+
+async function startReasoning() {
+    const phone = document.getElementById('reasoning-senior-select').value;
+    if (!phone) return alert('Select a senior first');
+
+    const stepsEl = document.getElementById('reasoning-steps');
+    const graphEl = document.getElementById('reasoning-graph');
+    graphEl.innerHTML = '';
+
+    // Define steps
+    const steps = [
+        { title: 'Look up Senior in Neo4j', icon: '👴', query: 'MATCH (s:Senior {phone: $phone}) RETURN s' },
+        { title: 'Find Reported Symptoms', icon: '🔴', query: 'MATCH (s:Senior)-[:REPORTED]->(sy:Symptom) RETURN sy' },
+        { title: 'Match Medication Side Effects', icon: '💊', query: 'MATCH (s)-[:TAKES]->(m)-[:SIDE_EFFECT]->(sy)<-[:REPORTED]-(s) RETURN m, sy' },
+        { title: 'Detect Drug Interactions', icon: '⚠️', query: 'MATCH (m1)-[:INTERACTS_WITH]->(m2) WHERE (s)-[:TAKES]->(m1) RETURN m1, m2' },
+        { title: 'Suggest Conditions from Symptoms', icon: '🏥', query: 'MATCH (sy:Symptom)-[:SUGGESTS]->(c:Condition) RETURN sy, c' },
+        { title: 'Recommend Matching Doctors', icon: '👨‍⚕️', query: 'MATCH (c:Condition)<-[:CAN_TREAT]-(d:Doctor) RETURN d' },
+    ];
+
+    // Render step cards (all dimmed)
+    stepsEl.innerHTML = steps.map((s, i) => `
+        <div class="reasoning-step" id="rstep-${i}">
+            <div class="step-number">${i + 1}</div>
+            <div class="step-content">
+                <h3>${s.icon} ${s.title}</h3>
+                <code class="step-query">${s.query}</code>
+                <p id="rstep-result-${i}"></p>
+            </div>
+        </div>
+    `).join('');
+
+    // Fetch all data
+    let senior, sideEffects, interactions, doctors, careNetwork;
+    try {
+        [senior, sideEffects, interactions, doctors, careNetwork] = await Promise.all([
+            fetchJSON(`/api/seniors/${encodeURIComponent(phone)}`),
+            fetchJSON(`/api/graph/side-effects/${encodeURIComponent(phone)}`),
+            fetchJSON(`/api/graph/drug-interactions/${encodeURIComponent(phone)}`),
+            fetchJSON(`/api/graph/doctors/for-senior/${encodeURIComponent(phone)}`),
+            fetchJSON(`/api/graph/care-network/${encodeURIComponent(phone)}`),
+        ]);
+    } catch(e) {
+        stepsEl.innerHTML = `<p class="empty-state">Error loading data: ${e.message}</p>`;
+        return;
+    }
+
+    const symptoms = careNetwork.nodes.filter(n => n.type === 'Symptom').map(n => n.label);
+    const conditions = careNetwork.nodes.filter(n => n.type === 'Condition').map(n => n.label);
+
+    // Animate steps
+    const results = [
+        `<span class="step-result">Found: ${senior.name} — takes ${senior.medications.join(', ')}</span>`,
+        `<span class="step-result">Symptoms: ${symptoms.length ? symptoms.join(', ') : 'none reported'}</span>`,
+        `<span class="step-result">${sideEffects.side_effects.length ? sideEffects.side_effects.map(s => `${s.medication} → ${s.symptom}`).join(', ') : 'No side effect matches'}</span>`,
+        `<span class="step-result">${interactions.interactions.length ? interactions.interactions.map(i => `${i.drug1} ↔ ${i.drug2}`).join(', ') : 'No interactions'}</span>`,
+        `<span class="step-result">${conditions.length ? conditions.join(', ') : 'No conditions suggested'}</span>`,
+        `<span class="step-result">${doctors.recommended_doctors.length ? doctors.recommended_doctors.slice(0, 3).map(d => `${d.name} (${d.specialty})`).join(', ') : 'No doctors matched'}</span>`,
+    ];
+
+    for (let i = 0; i < steps.length; i++) {
+        const el = document.getElementById(`rstep-${i}`);
+        el.classList.add('active');
+        el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        await new Promise(r => setTimeout(r, 800));
+        document.getElementById(`rstep-result-${i}`).innerHTML = results[i];
+        el.classList.remove('active');
+        el.classList.add('done');
+        await new Promise(r => setTimeout(r, 700));
+    }
+
+    // Build reasoning chain graph
+    const nodes = [];
+    const edges = [];
+    const seen = new Set();
+
+    function addNode(id, label, type) {
+        if (!seen.has(id)) { seen.add(id); nodes.push({ id, label, shape: NODE_SHAPES[type] || 'dot', color: NODE_COLORS[type] || {background:'#6b7280',border:'#4b5563'}, font: {color:'#fff', size: 12}, size: type === 'Senior' ? 40 : 28, title: `${type}: ${label}` }); }
+    }
+
+    addNode('senior', senior.name, 'Senior');
+    senior.medications.forEach(m => { addNode(`med_${m}`, m, 'Medication'); edges.push({from:'senior',to:`med_${m}`,label:'TAKES',arrows:'to',color:{color:'#9ca3af'},font:{size:9,color:'#6b7280',strokeWidth:2,strokeColor:'#fff'}}); });
+    symptoms.forEach(s => { addNode(`sym_${s}`, s, 'Symptom'); edges.push({from:'senior',to:`sym_${s}`,label:'REPORTED',arrows:'to',color:{color:'#9ca3af'},font:{size:9,color:'#6b7280',strokeWidth:2,strokeColor:'#fff'}}); });
+    sideEffects.side_effects.forEach(se => { if(seen.has(`med_${se.medication}`)&&seen.has(`sym_${se.symptom}`)) edges.push({from:`med_${se.medication}`,to:`sym_${se.symptom}`,label:'SIDE_EFFECT',arrows:'to',color:{color:'#ef4444'},font:{size:9,color:'#ef4444',strokeWidth:2,strokeColor:'#fff'},width:3}); });
+    conditions.forEach(c => { addNode(`cond_${c}`, c, 'Condition'); });
+    careNetwork.edges.filter(e => e.label === 'SUGGESTS').forEach(e => { const symNode = careNetwork.nodes.find(n=>n.id===e.from); const condNode = careNetwork.nodes.find(n=>n.id===e.to); if(symNode&&condNode&&seen.has(`sym_${symNode.label}`)&&seen.has(`cond_${condNode.label}`)) edges.push({from:`sym_${symNode.label}`,to:`cond_${condNode.label}`,label:'SUGGESTS',arrows:'to',color:{color:'#7c3aed'},font:{size:9,color:'#7c3aed',strokeWidth:2,strokeColor:'#fff'},width:2}); });
+    doctors.recommended_doctors.slice(0, 5).forEach(d => { addNode(`doc_${d.name}`, d.name, 'Doctor'); (d.conditions||[]).forEach(c => { if(seen.has(`cond_${c}`)) edges.push({from:`doc_${d.name}`,to:`cond_${c}`,label:'CAN_TREAT',arrows:'to',color:{color:'#0891b2'},font:{size:9,color:'#0891b2',strokeWidth:2,strokeColor:'#fff'},width:2}); }); });
+
+    const options = { physics: { solver:'forceAtlas2Based', forceAtlas2Based:{gravitationalConstant:-80,springLength:180}, stabilization:{iterations:150} }, interaction:{hover:true}, nodes:{borderWidth:2}, edges:{smooth:{type:'continuous'}} };
+    reasoningNetwork = new vis.Network(graphEl, { nodes: new vis.DataSet(nodes), edges: new vis.DataSet(edges) }, options);
+    reasoningNetwork.once('stabilizationIterationsDone', () => { reasoningNetwork.fit({animation:{duration:500}}); });
+}
+
+function resetReasoning() {
+    document.getElementById('reasoning-steps').innerHTML = '<p class="empty-state">Select a senior and click "Start Walkthrough" to see how Neo4j reasons through the care graph.</p>';
+    document.getElementById('reasoning-graph').innerHTML = '';
 }
 
 // ── Demo Mode ──

@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # GMI Cloud Inference
     gmi_base_url: str = "https://api.gmi-serving.com/v1"
     gmi_api_key: str = ""
-    gmi_model: str = "deepseek-ai/DeepSeek-R1"
+    gmi_model: str = "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8"
 
     # App
     base_url: str = "http://localhost:8000"

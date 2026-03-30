@@ -125,13 +125,14 @@ CareGraph uses Neo4j to model the complete care network as a knowledge graph and
 
 | Component | Technology | Purpose |
 |-----------|-----------|---------|
-| Graph Database | **Neo4j 5** | Stores and queries the care network graph |
+| Graph Database | **Neo4j Aura** | Cloud knowledge graph — 10 node types, 159 doctors, 38 clinics |
 | AI Orchestration | **RocketRide AI** | Pipeline orchestration via `.pipe` files — Webhook → Prompt → LLM → Response |
-| LLM | **Gemini 2.5 Flash** | Language model behind RocketRide pipelines |
-| Backend | **FastAPI** (Python) | REST API serving frontend and processing logic |
-| Frontend | **HTML/JS + Chart.js** | Dashboard and graph visualization |
+| LLM Inference | **GMI Cloud (Qwen3-235B)** | 235B parameter model — care plans, drug explanations, condition suggestions |
+| Voice Agent | **Bland AI** | Automated phone calls to seniors for daily check-ins |
+| Agent Orchestration | **CrewAI** | 5 specialized agents with 11 custom tools |
+| Backend | **FastAPI** (Python) | REST API — 34 endpoints |
+| Frontend | **HTML/JS + vis.js** | Interactive dashboard + graph visualization |
 | Package Manager | **uv** | Python dependency management |
-| Containerization | **Docker** | Neo4j instance |
 
 ---
 

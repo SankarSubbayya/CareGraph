@@ -294,8 +294,10 @@ Webhook (input) → Prompt (template) → Gemini LLM → Response (output)
 ### Inference Chain
 
 ```
-RocketRide Pipeline (.pipe webhook) → GMI Cloud (api.gmi-serving.com) → empty fallback
+RocketRide Pipeline (.pipe webhook) → GMI Cloud / Qwen3-235B (api.gmi-serving.com) → empty fallback
 ```
+
+**Model:** `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` — 235 billion parameter model via GMI Cloud
 
 ### Setup
 
@@ -307,11 +309,11 @@ RocketRide Pipeline (.pipe webhook) → GMI Cloud (api.gmi-serving.com) → empt
 5. Click play to start the pipeline
 6. Set `ROCKETRIDE_APIKEY` in `.env` to the key from the extension
 
-**GMI Cloud (fallback):**
+**GMI Cloud (LLM inference):**
 1. Sign up at [console.gmicloud.ai](https://console.gmicloud.ai)
 2. Create an API key in organization settings
 3. Set `GMI_API_KEY` in `.env`
-4. Optionally change `GMI_MODEL` (default: `deepseek-ai/DeepSeek-R1`)
+4. Default model: `Qwen/Qwen3-235B-A22B-Instruct-2507-FP8` (235B parameter model)
 
 ## Tech Stack
 
@@ -321,7 +323,7 @@ RocketRide Pipeline (.pipe webhook) → GMI Cloud (api.gmi-serving.com) → empt
 | **CrewAI** | Multi-agent orchestration — 5 specialized agents collaborate on check-ins |
 | **Bland AI** | Voice agent — automated phone calls to seniors for check-ins |
 | **RocketRide AI** | Pipeline orchestration — webhook → prompt → Gemini LLM → response |
-| **GMI Cloud** | LLM inference — powers CrewAI agents and direct API fallback |
+| **GMI Cloud** | LLM inference — Qwen3-235B powers AI care plans, drug explanations, condition suggestions |
 | **FastAPI** | Python backend API |
 | **Chart.js** | Dashboard visualization |
 

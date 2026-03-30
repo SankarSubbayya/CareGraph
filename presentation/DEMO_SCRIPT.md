@@ -18,10 +18,11 @@
 
 **CareGraph is an AI-powered care companion that checks in on seniors daily — so families and doctors don't have to do it alone.**
 
-Three things happen every day:
+Four things happen every day:
 1. **Bland AI calls the senior** — a warm, patient voice agent asks about mood, medications, symptoms, and needs
 2. **Neo4j builds a knowledge graph** — every symptom, medication, and interaction is connected
-3. **RocketRide AI reasons over the graph** — detects drug interactions, flags side effects, generates care plans
+3. **RocketRide AI orchestrates pipelines** — visual pipeline canvas routes data through AI reasoning
+4. **GMI Cloud (Qwen3-235B) generates intelligence** — drug interaction explanations, care plans, condition suggestions
 
 **Result:** Family gets a dashboard. Doctors get insights. Seniors get care. 24/7.
 
@@ -39,21 +40,24 @@ Lisinopril HAS_SIDE_EFFECT dizziness
 ```
 
 **What Neo4j does:**
-- Models the complete care network: seniors, medications, symptoms, conditions, family, services
-- 9 node types, 9 relationship types — all connected
+- Models the complete care network: seniors, medications, symptoms, conditions, doctors, clinics, family, services
+- 10 node types, 11 relationship types — all connected
 - Drug interaction detection via `INTERACTS_WITH` edges
 - Side effect matching via graph traversal (not keyword search!)
+- Doctor recommendations via `CAN_TREAT` → `Condition` → `Symptom` path
+- 159 real doctors + 38 clinics in the knowledge graph
 - Cross-patient pattern detection: "3 seniors on Lisinopril all report dizziness"
 
-**Demo:** Show the interactive graph visualization — drag nodes, see relationships light up
+**Demo:** Show the interactive graph visualization — drag nodes, see relationships light up. Switch between "Care Network" and "Doctors Network" views.
 
 ---
 
-## Slide 4: How RocketRide AI Adds Intelligence (45 sec)
+## Slide 4: How RocketRide AI + GMI Cloud Add Intelligence (45 sec)
 
-**Neo4j finds the patterns. RocketRide AI explains them.**
+**Neo4j finds the patterns. AI explains them.**
 
-Four RocketRide pipelines (`.pipe` files):
+### RocketRide AI — Pipeline Orchestration
+Four visual pipelines (`.pipe` files) in VS Code:
 
 | Pipeline | What it does |
 |----------|-------------|
@@ -64,34 +68,40 @@ Four RocketRide pipelines (`.pipe` files):
 
 **How it works:**
 ```
-Webhook (input) → Prompt Template → Gemini LLM → Response
+Webhook (input) → Prompt Template → LLM → Response
 ```
 
-**Demo:** Show RocketRide pipeline in VS Code — visual canvas, click play
+### GMI Cloud — LLM Inference (Qwen3-235B)
+- **Model:** Qwen3-235B-A22B-Instruct — 235 billion parameter model
+- **API:** OpenAI-compatible at `api.gmi-serving.com`
+- **Role:** Powers all AI reasoning — drug explanations, care plans, condition suggestions
+- **Inference chain:** RocketRide pipeline → GMI Cloud (Qwen3-235B) → structured response
 
-**Fallback:** GMI Cloud (DeepSeek-R1) as backup inference
+**Demo:** Show AI Insights page — click "AI Care Plan" and watch Qwen3-235B generate a personalized care recommendation in real-time using Neo4j graph data.
+
+**Key point:** "The AI doesn't just chat — it reasons over the graph. It knows Dorothy takes Lisinopril, that Lisinopril causes dizziness, and that Dorothy reported dizziness. It connects all three to generate a specific recommendation."
 
 ---
 
 ## Slide 5: The Daily Check-in Flow (45 sec)
 
-**Live Demo — this is what happens every morning for Dorothy Williams:**
+**Live Demo — this is what happens every morning:**
 
 ```
-1. CareGraph triggers Bland AI → calls Dorothy at +14155551003
-2. AI voice agent: "Hi Dorothy, how are you feeling today?"
-3. Dorothy: "I've been dizzy all morning. Yes, I took my medications."
-4. Call ends → transcript arrives via webhook
-5. CrewAI agents kick in:
-   → Analysis Agent: extracts "dizzy", mood=sad, meds=taken
-   → Graph Agent: Neo4j query finds Lisinopril → SIDE_EFFECT → dizzy
-   → Recommendation Agent: "Dizziness may be a side effect of Lisinopril. Talk to doctor."
-   → Alert Agent: triggers medium-severity alert
-6. Family dashboard updates in real-time
-7. Son James gets notified
+1. CareGraph triggers Bland AI → calls the senior
+2. AI voice agent: "Good morning! This is your daily check-in from CareGraph."
+3. Asks about mood, medications, symptoms, and doctor needs
+4. Voice agent has 159 doctors from Neo4j — can recommend specific doctors by name and phone
+5. Call ends → transcript processed
+6. CrewAI agents kick in:
+   → Analysis Agent: extracts symptoms, mood, medication adherence
+   → Graph Agent: Neo4j finds drug interactions, side effects, matching conditions
+   → Recommendation Agent: GMI Cloud (Qwen3-235B) generates care plan
+   → Alert Agent: evaluates urgency, triggers notifications
+7. Family dashboard updates — alerts appear in real-time
 ```
 
-**Demo:** Run the simulate check-in flow live, show graph update, show alert appear
+**Demo:** Make a LIVE phone call to a real person using Bland AI. Then show the transcript being processed into the graph.
 
 ---
 
@@ -107,10 +117,11 @@ Margaret: "I fell yesterday. My hip hurts. I forgot my medications."
 - Detects "fell" → CRITICAL emergency alert
 - Detects missed medications → MEDIUM alert
 - Neo4j checks: Margaret takes Metformin + Lisinopril → interaction risk
+- GMI Cloud (Qwen3-235B) explains: "Metformin and Lisinopril can increase risk of lactic acidosis, especially with kidney concerns"
 - Family gets immediate notification
-- Care plan: "Immediate attention needed. Check for hip fracture."
+- Doctor recommended from graph: matched by condition
 
-**Demo:** Show the emergency alert cascade on dashboard
+**Demo:** Simulate the check-in, show alerts cascade on dashboard
 
 ---
 
@@ -120,12 +131,14 @@ Margaret: "I fell yesterday. My hip hurts. I forgot my medications."
 
 ```
 Check-in Agent → Analysis Agent → Graph Agent → Recommendation Agent → Alert Agent
-  (Bland AI)      (NLP extract)    (Neo4j)       (RocketRide/GMI)      (Alerts)
+  (Bland AI)      (NLP extract)    (Neo4j)       (Qwen3-235B/GMI)      (Alerts)
 ```
 
 - Each agent has specialized tools and a clear role
 - Sequential pipeline — each agent builds on the previous
-- All powered by GMI Cloud (DeepSeek-R1) for reasoning
+- All AI reasoning powered by **GMI Cloud** running **Qwen3-235B** (235B parameter model)
+- Graph Agent queries Neo4j with Cypher — drug interactions, side effects, doctor matching
+- Recommendation Agent feeds graph insights to Qwen3-235B for personalized care plans
 
 **Why CrewAI?** Single LLM call can't do it all. Specialized agents = better results.
 
@@ -133,15 +146,17 @@ Check-in Agent → Analysis Agent → Graph Agent → Recommendation Agent → A
 
 ## Slide 8: Tech Stack (15 sec)
 
-| Layer | Technology |
-|-------|-----------|
-| Voice | **Bland AI** — automated phone calls |
-| Graph | **Neo4j Aura** — cloud knowledge graph |
-| AI Pipelines | **RocketRide AI** — visual LLM orchestration |
-| LLM Inference | **GMI Cloud** — DeepSeek-R1 |
-| Agent Orchestration | **CrewAI** — 5 specialized agents |
-| Backend | **FastAPI** — Python REST API |
-| Frontend | **HTML/JS/vis.js** — interactive dashboard |
+| Layer | Technology | Role |
+|-------|-----------|------|
+| Voice | **Bland AI** | Automated phone calls to seniors |
+| Graph | **Neo4j Aura** | Cloud knowledge graph — 10 node types, 159 doctors, 38 clinics |
+| AI Pipelines | **RocketRide AI** | Visual pipeline orchestration (.pipe files) |
+| LLM Inference | **GMI Cloud (Qwen3-235B)** | 235B parameter model for reasoning |
+| Agent Orchestration | **CrewAI** | 5 specialized agents with 11 custom tools |
+| Backend | **FastAPI** | Python REST API — 34 endpoints |
+| Frontend | **HTML/JS/vis.js** | Interactive dashboard + graph visualization |
+
+**Open source contribution:** We also submitted a Bland AI tool node to the RocketRide project — [PR #521](https://github.com/rocketride-org/rocketride-server/pull/521).
 
 ---
 
@@ -153,28 +168,34 @@ Check-in Agent → Analysis Agent → Graph Agent → Recommendation Agent → A
 | Doctor sees patient every 3 months | Doctor gets weekly graph insights |
 | Drug interactions discovered at ER | Drug interactions caught on day 1 |
 | Falls discovered hours later | Emergency alert in 2 seconds |
+| "Why am I dizzy?" — no answer | Neo4j: "Dizziness is a side effect of Lisinopril" |
+| Need a doctor? Search Google | Graph recommends rated doctors who treat your condition |
 | Care is reactive | Care is proactive |
 
 **CareGraph doesn't replace caregivers — it gives them superpowers.**
 
 ---
 
-## Slide 10: Demo (3-5 min live)
+## Slide 10: Live Demo (3-5 min)
 
 ### Demo Flow:
-1. **Dashboard** — show 3 seniors, their statuses, alerts banner
-2. **Graph View** — select Dorothy, show interactive graph (vis.js), point out Lisinopril → dizzy connection
-3. **AI Insights** — show drug interactions for Margaret (Metformin ↔ Lisinopril), side effects for Dorothy
-4. **Simulate Check-in** — type "I fell and feel dizzy. I forgot my medications." — show emergency alerts fire
-5. **Voice Calls** — show Bland AI call interface (initiate if time permits)
-6. **CrewAI** — run analysis crew, show 5 agents working in sequence
-7. **Neo4j Browser** — show the graph in Aura console (optional)
+1. **Landing Page** — show problem statement, solution flow, tech stack
+2. **Dashboard** — show 4 seniors, their statuses, alerts banner (11 active alerts)
+3. **Graph View → Care Network** — select Dorothy, show interactive vis.js graph (medications, symptoms, family)
+4. **Graph View → Doctors Network** — switch to doctors view (symptoms → conditions → 110 doctors → clinics)
+5. **AI Insights → Drug Interactions** — select Margaret, show Metformin ↔ Lisinopril with Qwen3-235B explanation
+6. **AI Insights → AI Care Plan** — select Dorothy, show full AI-generated care recommendation (live from GMI Cloud)
+7. **Simulate Check-in** — type "I fell and feel dizzy. I forgot my medications. I need to see a doctor." → show emergency alerts + doctor appointment request
+8. **Voice Calls** — make a LIVE Bland AI call (already tested with Josh Xavier)
+9. **CrewAI Agents** — show the 5-agent pipeline visualization
 
 ### Key talking points during demo:
-- "Notice how Neo4j connected Dorothy's dizziness to Lisinopril — that's graph intelligence, not keyword matching"
-- "RocketRide AI explained this interaction in plain English for the family"
+- "Neo4j connected Dorothy's dizziness to Lisinopril — that's graph intelligence, not keyword matching"
+- "GMI Cloud's Qwen3-235B model explained this interaction in plain English for the family"
+- "159 real doctors are in the knowledge graph — the voice agent recommends specific doctors by name"
 - "This alert fired in 2 seconds — no human had to review anything"
 - "Five AI agents collaborated to produce this care plan"
+- "We contributed a Bland AI tool node back to RocketRide — PR #521"
 
 ---
 
@@ -182,6 +203,6 @@ Check-in Agent → Analysis Agent → Graph Agent → Recommendation Agent → A
 
 **CareGraph: Because every senior deserves a daily check-in.**
 
-Built with Neo4j + RocketRide AI + Bland AI + GMI Cloud + CrewAI
+Built with Neo4j + RocketRide AI + GMI Cloud (Qwen3-235B) + Bland AI + CrewAI
 
 **Team:** [Your team name]

@@ -2,9 +2,9 @@
 
 The app reads **`NEO4J_*` environment variables** only. It does not fetch secrets from GitHub at runtime; you configure them where your environment supports it.
 
-## Why not a shared `.env` in the repo?
+## Why not commit secrets?
 
-Secrets must not be committed. Use one of the options below.
+Secrets must not be committed. Configure them in GitHub (Actions / Codespaces) or export them locally — the app does not read a `.env` file.
 
 ## GitHub Actions (CI)
 
@@ -31,8 +31,10 @@ If secrets are missing, the job skips the DB check with a notice (does not fail)
 1. **Settings** → **Secrets and variables** → **Codespaces**.
 2. Add the same variable names as above.
 
-Codespaces injects them as environment variables in the dev container, so contributors do not need a local `.env` file when working in the browser.
+Codespaces injects them as environment variables in the dev container.
 
-## Local development
+## Local development (outside Codespaces)
 
-Set variables in your shell, use a **gitignored** `.env` file (copy from `.env.example`), or use your OS keychain / secret manager. GitHub does not expose repository secret values to clone checkouts on your machine.
+`export` the same variable names in your shell before `uv run`, or set them in your IDE’s run/debug configuration. GitHub does not expose repository secret values to a normal clone on your machine.
+
+Optional keys used elsewhere in the app (also env-only): `BLAND_API_KEY`, `ROCKETRIDE_URI`, `ROCKETRIDE_APIKEY`, `GMI_API_KEY`, `GMI_MODEL`.

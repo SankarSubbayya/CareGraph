@@ -86,7 +86,7 @@ CareGraph triggers call → Bland AI dials senior → AI voice agent converses
 ### Setup
 
 1. Sign up at [bland.ai](https://www.bland.ai) and get an API key
-2. Set `BLAND_API_KEY` in `.env`
+2. Set `BLAND_API_KEY` in your environment (e.g. Codespaces secret or `export` before `uv run`)
 3. Call `POST /api/voice/call/{phone}` to initiate a check-in call
 
 ## Graph Model
@@ -125,11 +125,11 @@ open http://localhost:8000
 
 ### Neo4j credentials
 
-The backend reads **`NEO4J_URI`**, **`NEO4J_USERNAME`**, **`NEO4J_PASSWORD`**, and optionally **`NEO4J_DATABASE`** from the environment (or from a local `.env` file if you create one). It does not pull secrets from GitHub at runtime.
+The backend reads **`NEO4J_URI`**, **`NEO4J_USERNAME`**, **`NEO4J_PASSWORD`**, and optionally **`NEO4J_DATABASE`** from the environment only. It does not load a `.env` file or call the GitHub API at runtime.
 
 - **CI:** add the same names as [repository Actions secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions); the [Neo4j smoke workflow](.github/workflows/neo4j-smoke.yml) uses them automatically.
-- **GitHub Codespaces:** add [Codespaces secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-development-environment-secrets-for-your-repository) with the same names so contributors do not need a copied `.env`.
-- **Local machine:** use a gitignored `.env` (see `.env.example`) or export variables in your shell.
+- **GitHub Codespaces:** add [Codespaces secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-development-environment-secrets-for-your-repository) with the same names.
+- **Local machine:** `export` the variables in your shell (or your IDE run configuration) before starting the app. Repository secrets are not available on a plain git clone.
 
 Details: [.github/SETUP_SECRETS.md](.github/SETUP_SECRETS.md).
 
@@ -256,12 +256,12 @@ RocketRide Pipeline (.pipe webhook) → GMI Cloud (api.gmi-serving.com) → empt
 3. Open any `.pipe` file → visual pipeline canvas appears
 4. Configure the Gemini node with your API key
 5. Click play to start the pipeline
-6. Set `ROCKETRIDE_APIKEY` in `.env` to the key from the extension
+6. Set `ROCKETRIDE_APIKEY` in the environment to the key from the extension (e.g. Codespaces secret or `export`)
 
 **GMI Cloud (fallback):**
 1. Sign up at [console.gmicloud.ai](https://console.gmicloud.ai)
 2. Create an API key in organization settings
-3. Set `GMI_API_KEY` in `.env`
+3. Set `GMI_API_KEY` in the environment
 4. Optionally change `GMI_MODEL` (default: `deepseek-ai/DeepSeek-R1`)
 
 ## Tech Stack

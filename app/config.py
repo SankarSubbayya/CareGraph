@@ -1,19 +1,12 @@
-from pathlib import Path
-
 from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Load .env only when present. CI and GitHub Codespaces inject NEO4J_* via the environment.
-_REPO_ROOT = Path(__file__).resolve().parent.parent
-_ENV_FILE = _REPO_ROOT / ".env"
+# All configuration comes from the process environment (GitHub Actions / Codespaces secrets,
+# or `export` in your shell locally). No .env file is loaded.
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(
-        env_file=_ENV_FILE if _ENV_FILE.is_file() else None,
-        env_file_encoding="utf-8",
-        extra="ignore",
-    )
+    model_config = SettingsConfigDict(extra="ignore")
 
     # Neo4j — matches GitHub Actions / Codespaces secret names (injected as env, no runtime GitHub API).
     neo4j_uri: str = Field(

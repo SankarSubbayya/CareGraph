@@ -25,13 +25,9 @@ from app.graph_db import (
     get_care_network,
     store_checkin,
 )
+from app.services.call_analyzer import analyze_transcript
 from app.services.alert_engine import evaluate_checkin
 from app.services import bland_voice, gmi_inference
-from app.services.rocketride import (
-    analyze_checkin_transcript,
-    explain_drug_interaction,
-    local_analyzer_to_normalized,
-)
 
 
 def _run_async(coro):
@@ -81,24 +77,12 @@ class AnalyzeTranscriptTool(BaseTool):
     description: str = (
         "Analyze a check-in call transcript to extract mood, symptoms, "
         "medication adherence, wellness score, and service needs. "
-        "Input: the raw transcript text. Optional JSON field senior_phone loads "
-        "profile and uses RocketRide/GMI when configured. "
+        "Input: the raw transcript text. "
         "Returns structured analysis JSON."
     )
 
     def _run(self, transcript: str = "", **kwargs) -> str:
-        phone = kwargs.get("senior_phone", "")
-        if phone:
-            senior = get_senior(phone)
-            if senior:
-                analysis = _run_async(
-                    analyze_checkin_transcript(
-                        transcript, senior["name"], senior.get("medications", [])
-                    )
-                )
-                if analysis:
-                    return json.dumps(analysis, default=str)
-        analysis = local_analyzer_to_normalized(transcript)
+        analysis = analyze_transcript(transcript)
         return json.dumps(analysis, default=str)
 
 
@@ -204,8 +188,7 @@ class StoreCheckInTool(BaseTool):
 class ExplainDrugInteractionTool(BaseTool):
     name: str = "explain_drug_interaction"
     description: str = (
-        "Use AI (RocketRide pipeline with GMI fallback) to explain a drug interaction "
-        "in plain language. "
+        "Use AI (GMI Cloud) to explain a drug interaction in plain language. "
         "Input: two drug names separated by ' and '. "
         "Returns explanation for family caregivers."
     )
@@ -215,7 +198,12 @@ class ExplainDrugInteractionTool(BaseTool):
         drug1 = parts[0].strip() if parts else ""
         drug2 = parts[1].strip() if len(parts) > 1 else ""
 
-        result = _run_async(explain_drug_interaction(drug1, drug2))
+        prompt = (
+            f"Explain the drug interaction between {drug1} and {drug2} "
+            f"for a senior patient. Include severity, symptoms to watch, "
+            f"and what caregivers should do. Keep under 100 words."
+        )
+        result = _run_async(gmi_inference.query(prompt, system="You are a senior care AI assistant."))
         return result or "No AI explanation available."
 
 

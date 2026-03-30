@@ -130,12 +130,60 @@ open http://localhost:8000
 - `GET /api/alerts` — Active alerts
 - `PUT /api/alerts/{id}/acknowledge` — Acknowledge
 
+## RocketRide AI Pipeline Integration
+
+CareGraph uses **RocketRide AI pipelines** (`.pipe` files) to orchestrate AI reasoning. Each pipeline follows the pattern:
+
+```
+Webhook (input) → Prompt (template) → Gemini LLM → Response (output)
+```
+
+### Pipelines
+
+| Pipeline | File | Purpose |
+|----------|------|---------|
+| Check-in Analysis | `pipelines/checkin_analysis.pipe` | Extracts symptoms, mood, urgency from transcripts |
+| Drug Interaction | `pipelines/drug_interaction.pipe` | Explains medication interactions for caregivers |
+| Care Recommendation | `pipelines/care_recommendation.pipe` | Generates personalized care plans from graph data |
+| Condition Suggestion | `pipelines/condition_suggestion.pipe` | Suggests conditions from symptom clusters |
+
+### How It Connects
+
+1. Backend calls `POST {ROCKETRIDE_URI}/webhook` with `{"text": "..."}`
+2. RocketRide routes through the pipeline: prompt template → Gemini 2.5 Flash
+3. Response returned at `resp["data"]["objects"]["body"]["answers"]`
+4. If RocketRide is unavailable, falls back to **GMI Cloud** direct inference
+5. If neither is configured, graph queries still work (AI explanations are empty)
+
+### Inference Chain
+
+```
+RocketRide Pipeline (.pipe webhook) → GMI Cloud (api.gmi-serving.com) → empty fallback
+```
+
+### Setup
+
+**RocketRide (primary):**
+1. Install **RocketRide VS Code extension** from Marketplace
+2. Click rocket icon → Connect → **Local** (runs on port 5565)
+3. Open any `.pipe` file → visual pipeline canvas appears
+4. Configure the Gemini node with your API key
+5. Click play to start the pipeline
+6. Set `ROCKETRIDE_APIKEY` in `.env` to the key from the extension
+
+**GMI Cloud (fallback):**
+1. Sign up at [console.gmicloud.ai](https://console.gmicloud.ai)
+2. Create an API key in organization settings
+3. Set `GMI_API_KEY` in `.env`
+4. Optionally change `GMI_MODEL` (default: `deepseek-ai/DeepSeek-R1`)
+
 ## Tech Stack
 
 | Tool | Role |
 |------|------|
 | **Neo4j** | Graph database — models care relationships, drug interactions, symptoms |
-| **RocketRide AI** | Intelligence — transcript analysis, drug explanations, care plans |
+| **RocketRide AI** | Pipeline orchestration — webhook → prompt → Gemini LLM → response |
+| **GMI Cloud** | Direct LLM inference fallback — OpenAI-compatible API at `api.gmi-serving.com` |
 | **FastAPI** | Python backend API |
 | **Chart.js** | Dashboard visualization |
 
@@ -144,6 +192,11 @@ open http://localhost:8000
 ```
 CareGraph/
 ├── main.py                    # FastAPI app
+├── pipelines/                 # RocketRide AI pipelines (.pipe files)
+│   ├── checkin_analysis.pipe  # Transcript analysis pipeline
+│   ├── drug_interaction.pipe  # Drug interaction explainer pipeline
+│   ├── care_recommendation.pipe # Care plan generation pipeline
+│   └── condition_suggestion.pipe # Condition suggester pipeline
 ├── app/
 │   ├── config.py              # Settings
 │   ├── graph_db.py            # Neo4j database layer (all Cypher queries)
@@ -155,10 +208,12 @@ CareGraph/
 │   │   ├── alerts.py          # Alert management
 │   │   └── graph.py           # Graph intelligence + RocketRide AI
 │   └── services/
-│       ├── rocketride.py      # RocketRide AI integration
-│       ├── call_analyzer.py   # Transcript NLP
+│       ├── rocketride.py      # RocketRide webhook + GMI Cloud fallback
+│       ├── gmi_inference.py   # GMI Cloud direct inference client
+│       ├── call_analyzer.py   # Transcript NLP (local fallback)
 │       └── alert_engine.py    # Rule-based alerts
 ├── frontend/                  # Dashboard
+├── data/                      # EHR sample data from HuggingFace
 ├── scripts/
 │   └── seed_data.py           # Demo data with drug interactions
 └── tests/

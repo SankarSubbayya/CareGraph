@@ -1,160 +1,230 @@
 """
 RocketRide AI integration for CareGraph.
 
-Uses RocketRide AI for:
-1. Transcript analysis — extract symptoms, mood, service needs
-2. Drug interaction reasoning — explain why interactions are dangerous
-3. Care recommendations — suggest next steps based on graph patterns
-4. Symptom-to-condition inference — suggest possible conditions
+Inference chain:
+  1. Try RocketRide pipeline (webhook) — uses .pipe visual pipeline
+  2. Fallback to GMI Cloud direct API — OpenAI-compatible at api.gmi-serving.com
+  3. If neither configured, return empty (graph queries still work)
+
+RocketRide pipelines (.pipe files):
+  Webhook (input) → Prompt (template) → Gemini LLM → Response (output)
+
+GMI Cloud direct:
+  POST https://api.gmi-serving.com/v1/chat/completions (OpenAI-compatible)
 """
 
 from __future__ import annotations
 
+import json
 import logging
+import re
 
 import httpx
 
 from app.config import settings
+from app.services import gmi_inference
 
 logger = logging.getLogger(__name__)
 
+SYSTEM_PROMPT = (
+    "You are a healthcare AI assistant for CareGraph, a senior care platform. "
+    "Provide concise, actionable insights written for family caregivers, not doctors."
+)
 
-async def query_rocketride(prompt: str, context: str = "") -> str:
-    """Send a prompt to RocketRide AI and get a response."""
-    if not settings.rocketride_apikey:
-        logger.debug("RocketRide API key not set — using fallback")
+# ---------------------------------------------------------------------------
+# RocketRide webhook caller
+# ---------------------------------------------------------------------------
+
+async def _call_rocketride(text: str) -> str:
+    """Send text to RocketRide pipeline webhook and return the answer string."""
+    if not settings.rocketride_uri or not settings.rocketride_apikey:
         return ""
 
-    payload = {
-        "messages": [
-            {"role": "system", "content": "You are a healthcare AI assistant for CareGraph, a senior care platform. Provide concise, actionable insights."},
-        ],
-    }
-
-    if context:
-        payload["messages"].append({"role": "system", "content": f"Context:\n{context}"})
-
-    payload["messages"].append({"role": "user", "content": prompt})
-
     headers = {
-        "Authorization": f"Bearer {settings.rocketride_apikey}",
         "Content-Type": "application/json",
+        "Authorization": f"Bearer {settings.rocketride_apikey}",
     }
 
     try:
-        async with httpx.AsyncClient() as client:
-            resp = await client.post(
-                f"{settings.rocketride_uri}/v1/chat/completions",
-                json=payload,
+        # Connectivity check (3s timeout)
+        async with httpx.AsyncClient(timeout=3.0) as ping_client:
+            resp = await ping_client.post(
+                f"{settings.rocketride_uri}/webhook",
                 headers=headers,
-                timeout=30,
+                json={"text": "ping"},
+            )
+            data = resp.json()
+            body = data.get("data", {}).get("objects", {}).get("body", {})
+            if body.get("status") == "Error":
+                return ""
+    except Exception:
+        return ""
+
+    try:
+        # Main request (45s timeout for LLM processing)
+        async with httpx.AsyncClient(timeout=45.0) as client:
+            resp = await client.post(
+                f"{settings.rocketride_uri}/webhook",
+                headers=headers,
+                json={"text": text},
             )
             resp.raise_for_status()
             data = resp.json()
-            return data.get("choices", [{}])[0].get("message", {}).get("content", "")
+            body = data.get("data", {}).get("objects", {}).get("body", {})
+            answers = body.get("answers", [])
+
+            if isinstance(answers, list) and answers:
+                return answers[0]
+            return str(answers) if answers else ""
     except Exception as e:
         logger.warning("RocketRide query failed: %s", e)
         return ""
 
 
+# ---------------------------------------------------------------------------
+# Unified query: RocketRide → GMI Cloud fallback
+# ---------------------------------------------------------------------------
+
+async def _query(prompt: str, *, system: str = SYSTEM_PROMPT) -> str:
+    """Try RocketRide pipeline first, fall back to GMI Cloud direct."""
+    # Try RocketRide
+    result = await _call_rocketride(prompt)
+    if result:
+        logger.info("Response from RocketRide pipeline")
+        return result
+
+    # Fallback to GMI Cloud
+    result = await gmi_inference.query(prompt, system=system)
+    if result:
+        logger.info("Response from GMI Cloud (%s)", settings.gmi_model)
+        return result
+
+    logger.debug("No inference backend available — returning empty")
+    return ""
+
+
+# ---------------------------------------------------------------------------
+# JSON extraction helpers
+# ---------------------------------------------------------------------------
+
+def _extract_json_object(text: str) -> dict | None:
+    """Extract first JSON object from a response string."""
+    json_match = re.search(r"```(?:json)?\s*\n(.*?)(?:\n```|$)", text, re.DOTALL)
+    if json_match:
+        text = json_match.group(1).strip()
+
+    start = text.find("{")
+    end = text.rfind("}") + 1
+    if start >= 0 and end > start:
+        try:
+            return json.loads(text[start:end])
+        except (json.JSONDecodeError, ValueError):
+            pass
+    return None
+
+
+def _extract_json_array(text: str) -> list | None:
+    """Extract first JSON array from a response string."""
+    json_match = re.search(r"```(?:json)?\s*\n(.*?)(?:\n```|$)", text, re.DOTALL)
+    if json_match:
+        text = json_match.group(1).strip()
+
+    arr_match = re.search(r"\[.*\]", text, re.DOTALL)
+    if arr_match:
+        try:
+            return json.loads(arr_match.group(0))
+        except (json.JSONDecodeError, ValueError):
+            pass
+    return None
+
+
+# ---------------------------------------------------------------------------
+# Pipeline-specific functions
+# ---------------------------------------------------------------------------
+
 async def analyze_checkin_transcript(transcript: str, senior_name: str, medications: list[str]) -> dict:
-    """Use RocketRide AI to analyze a check-in transcript."""
+    """Analyze a check-in transcript — extract symptoms, mood, urgency."""
     meds_str = ", ".join(medications) if medications else "none listed"
 
-    prompt = f"""Analyze this senior care check-in call transcript for {senior_name}.
-Their medications: {meds_str}
+    prompt = (
+        f"Analyze this senior care check-in call transcript for {senior_name}.\n"
+        f"Their medications: {meds_str}\n\n"
+        f'Transcript:\n"{transcript}"\n\n'
+        f"Extract the following as JSON:\n"
+        f'{{\n'
+        f'  "mood": "happy|neutral|sad|concerning",\n'
+        f'  "wellness_score": 1-10,\n'
+        f'  "medication_taken": true|false|null,\n'
+        f'  "symptoms": ["list of symptoms mentioned"],\n'
+        f'  "concerns": ["list of concerns"],\n'
+        f'  "service_needs": ["list of services needed"],\n'
+        f'  "summary": "one sentence summary",\n'
+        f'  "recommendation": "what should the family do next"\n'
+        f'}}'
+    )
 
-Transcript:
-"{transcript}"
-
-Extract the following as JSON:
-{{
-  "mood": "happy|neutral|sad|concerning",
-  "wellness_score": 1-10,
-  "medication_taken": true|false|null,
-  "symptoms": ["list of symptoms mentioned"],
-  "concerns": ["list of concerns"],
-  "service_needs": ["list of services needed"],
-  "summary": "one sentence summary",
-  "recommendation": "what should the family do next"
-}}"""
-
-    response = await query_rocketride(prompt)
-
+    response = await _query(prompt)
     if not response:
         return {}
 
-    # Try to parse JSON from response
-    import json
-    try:
-        # Find JSON in response
-        start = response.find("{")
-        end = response.rfind("}") + 1
-        if start >= 0 and end > start:
-            return json.loads(response[start:end])
-    except (json.JSONDecodeError, ValueError):
-        pass
-
-    return {"raw_response": response}
+    result = _extract_json_object(response)
+    return result if result else {"raw_response": response}
 
 
 async def explain_drug_interaction(drug1: str, drug2: str) -> str:
-    """Use RocketRide AI to explain a drug interaction."""
-    prompt = f"""Explain the potential drug interaction between {drug1} and {drug2} for a senior patient.
-Include: what happens, severity (low/medium/high), and what the caregiver should do.
-Keep it under 100 words, written for a family member (not a doctor)."""
+    """Explain a drug interaction in plain language for caregivers."""
+    prompt = (
+        f"Explain the potential drug interaction between {drug1} and {drug2} "
+        f"for a senior patient.\n"
+        f"Include: what happens, severity (low/medium/high), symptoms to watch for, "
+        f"and what the caregiver should do.\n"
+        f"Keep it under 100 words, written for a family member (not a doctor)."
+    )
 
-    return await query_rocketride(prompt)
+    return await _query(prompt)
 
 
-async def generate_care_recommendation(senior_data: dict, recent_checkins: list[dict],
-                                        graph_insights: dict) -> str:
-    """Use RocketRide AI to generate personalized care recommendations from graph data."""
-    context = f"""Senior: {senior_data.get('name', 'Unknown')}
-Medications: {', '.join(senior_data.get('medications', []))}
-Recent moods: {', '.join(c.get('mood', '?') for c in recent_checkins[:5])}
-Recent wellness scores: {', '.join(str(c.get('wellness_score', 0)) for c in recent_checkins[:5])}
-Symptoms reported: {', '.join(graph_insights.get('symptoms', []))}
-Drug interactions: {graph_insights.get('interactions', 'none detected')}
-Side effect matches: {graph_insights.get('side_effects', 'none detected')}
-Similar seniors: {graph_insights.get('similar_seniors', 'none found')}"""
+async def generate_care_recommendation(
+    senior_data: dict, recent_checkins: list[dict], graph_insights: dict
+) -> str:
+    """Generate personalized care recommendations from graph data."""
+    prompt = (
+        f"Senior: {senior_data.get('name', 'Unknown')}\n"
+        f"Medications: {', '.join(senior_data.get('medications', []))}\n"
+        f"Recent moods: {', '.join(c.get('mood', '?') for c in recent_checkins[:5])}\n"
+        f"Recent wellness scores: {', '.join(str(c.get('wellness_score', 0)) for c in recent_checkins[:5])}\n"
+        f"Symptoms reported: {', '.join(graph_insights.get('symptoms', []))}\n"
+        f"Drug interactions: {graph_insights.get('interactions', 'none detected')}\n"
+        f"Side effect matches: {graph_insights.get('side_effects', 'none detected')}\n"
+        f"Similar seniors: {graph_insights.get('similar_seniors', 'none found')}\n\n"
+        f"Based on this senior's care graph data, provide:\n"
+        f"1. Top 3 actionable recommendations for the family\n"
+        f"2. Any concerns to discuss with their doctor\n"
+        f"3. Suggested schedule adjustments\n\n"
+        f"Be concise and practical. Write for a family caregiver."
+    )
 
-    prompt = """Based on this senior's care graph data, provide:
-1. Top 3 actionable recommendations for the family
-2. Any concerns to discuss with their doctor
-3. Suggested schedule adjustments
-
-Be concise and practical. Write for a family caregiver, not a medical professional."""
-
-    return await query_rocketride(prompt, context)
+    return await _query(prompt)
 
 
 async def suggest_conditions(symptoms: list[str]) -> list[dict]:
-    """Use RocketRide AI to suggest possible conditions from symptoms."""
+    """Suggest possible conditions from symptom clusters."""
     if not symptoms:
         return []
 
-    prompt = f"""Given these symptoms reported by a senior: {', '.join(symptoms)}
+    prompt = (
+        f"Given these symptoms reported by a senior: {', '.join(symptoms)}\n\n"
+        f"Suggest up to 3 possible conditions. For each, provide:\n"
+        f"- condition name\n"
+        f"- likelihood (low/medium/high)\n"
+        f"- recommended action\n\n"
+        f'Return as JSON array: [{{"condition": "...", "likelihood": "...", "action": "..."}}]\n'
+        f"Note: These are suggestions, not diagnoses. Always recommend consulting a doctor."
+    )
 
-Suggest up to 3 possible conditions. For each, provide:
-- condition name
-- likelihood (low/medium/high)
-- recommended action
-
-Return as JSON array: [{{"condition": "...", "likelihood": "...", "action": "..."}}]
-Note: These are suggestions, not diagnoses. Always recommend consulting a doctor."""
-
-    response = await query_rocketride(prompt)
+    response = await _query(prompt)
     if not response:
         return []
 
-    import json
-    try:
-        start = response.find("[")
-        end = response.rfind("]") + 1
-        if start >= 0 and end > start:
-            return json.loads(response[start:end])
-    except (json.JSONDecodeError, ValueError):
-        pass
-
-    return []
+    result = _extract_json_array(response)
+    return result if result else []

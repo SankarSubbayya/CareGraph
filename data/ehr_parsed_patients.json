@@ -1,0 +1,261 @@
+[
+  {
+    "name": "James Rodriguez",
+    "patient_id": "PC-114-2024",
+    "study_date": "October 14, 2024",
+    "study_type": "Exercise Stress Echocardiogram",
+    "heart_rate": 68,
+    "blood_pressure": "124/76",
+    "o2_sat": 98,
+    "mets": 10.2,
+    "max_hr": 162,
+    "symptoms": {
+      "Chest Pain": "Not present",
+      "Shortness of Breath": "Mild (expected with exercise)",
+      "Dizziness": "Not present",
+      "Nausea": "Not present",
+      "Palpitations": "Not present",
+      "Fatigue": "Appropriate for exercise level"
+    },
+    "test_result": "NEGATIVE for exercise-induced myocardial ischemia",
+    "rest_ef": "60-65%",
+    "stress_ef": "> 70%",
+    "recommendations": [
+      "Patient may return to normal activities without restriction",
+      "Continued risk factor modification with heart-healthy diet and regular aerobic exercise",
+      "Routine follow-up with Dr. Sterling",
+      "Return to clinic if symptoms recur"
+    ],
+    "gender": "Male",
+    "age_group": "Middle-Aged (45-69 years)",
+    "condition_category": "Normal Cardiac Function (Symptoms ruled out, healthy baseline, discharge)"
+  },
+  {
+    "name": "Jennifer Johnson",
+    "patient_id": "PC-104-2024",
+    "study_date": "October 12, 2024",
+    "study_type": "Exercise Stress Test with Stress Echocardiography",
+    "heart_rate": 74,
+    "blood_pressure": "136/80",
+    "o2_sat": 98,
+    "weight": "156 lbs",
+    "height": "5'6\"",
+    "mets": 6.8,
+    "max_hr": 135,
+    "symptoms": {
+      "Chest Pain": "Not present",
+      "Shortness of Breath": "Mild (expected with exercise)",
+      "Dizziness": "Not present",
+      "Nausea": "Not present",
+      "Palpitations": "Not present",
+      "Fatigue": "Appropriate for exercise level"
+    },
+    "test_result": "NEGATIVE for exercise-induced myocardial ischemia",
+    "rest_ef": "60-65%",
+    "stress_ef": ">70%",
+    "recommendations": [
+      "Urgent Cardiology consultation for invasive evaluation.",
+      "Proceed with Cardiac Catheterization (Coronary Angiography) to define",
+      "Optimize anti-anginal and anti-platelet therapy pending angiography.",
+      "Strict heart rate and blood pressure control."
+    ]
+  },
+  {
+    "name": "James Davis",
+    "patient_id": "JD-452-991",
+    "study_date": "November 12, 2024",
+    "study_type": "Exercise Stress Test with Stress Echocardiography",
+    "heart_rate": 68,
+    "blood_pressure": "128/78",
+    "mets": 10.2,
+    "max_hr": 169,
+    "symptoms": {
+      "Chest Pain": "Not present",
+      "Shortness of Breath": "Moderate",
+      "Dizziness": "Not present",
+      "Nausea": "Not present",
+      "Palpitations": "Not present",
+      "Fatigue": "Limiting symptom"
+    },
+    "test_result": "NEGATIVE for exercise-induced myocardial ischemia",
+    "rest_ef": "65%",
+    "stress_ef": ">70%",
+    "recommendations": [
+      "Continue current cardiovascular risk factor management",
+      "Patient may return to normal daily activities",
+      "Routine follow-up with referring physician",
+      "Clinical correlation regarding symptom etiology"
+    ],
+    "gender": "Female",
+    "age_group": "Middle-Aged (45-69 years)",
+    "condition_category": "Normal Cardiac Function (Symptoms ruled out, healthy baseline, discharge)"
+  },
+  {
+    "name": "Dorothy Williams",
+    "patient_id": "DW-892-2024",
+    "study_date": "October 24, 2024",
+    "heart_rate": 74,
+    "blood_pressure": "135/82",
+    "mets": 7.5,
+    "max_hr": 146,
+    "medications": [
+      "Lisinopril 10mg daily",
+      "Atorvastatin 20mg daily",
+      "Metoprolol 25mg daily"
+    ],
+    "clinical_indication": "72-year-old female referred for evaluation of atypical chest discomfort and recent\nfatigue. History significant for hypertension. Patient has normal resting ECG.\nStudy ordered to rule out ischemia and assess functional capacity.",
+    "recommendations": [],
+    "gender": "Female",
+    "age_group": "Elderly (70+ years)",
+    "condition_category": "Normal Cardiac Function (Symptoms ruled out, healthy baseline, discharge)"
+  },
+  {
+    "name": "William Rodriguez",
+    "patient_id": "WR-928-2024",
+    "heart_rate": 72,
+    "blood_pressure": "132/78",
+    "o2_sat": 98,
+    "weight": "190 lbs",
+    "height": "5'10\"",
+    "mets": 7.5,
+    "max_hr": 142,
+    "symptoms": {
+      "Chest Pain": "Not present",
+      "Shortness of Breath": "Present (fatigue and dyspnea)",
+      "Dizziness": "Not present",
+      "Nausea": "Not present",
+      "Palpitations": "Not present",
+      "Fatigue": "Present"
+    },
+    "test_result": "NEGATIVE for exercise-induced myocardial ischemia",
+    "rest_ef": "60%",
+    "stress_ef": ">65%",
+    "recommendations": [
+      "Continue medical management of cardiovascular risk factors.",
+      "Return to Emergency Department if symptoms recur or worsen significantly.",
+      "Follow up with Dr. Sarah Miller as scheduled to review results.",
+      "No further non-invasive cardiac testing indicated at this time."
+    ]
+  },
+  {
+    "name": "Patricia Chen",
+    "patient_id": "PC-092-2024",
+    "study_date": "October 15, 2024",
+    "study_type": "Exercise Stress Test",
+    "heart_rate": 72,
+    "blood_pressure": "124/80",
+    "o2_sat": 98,
+    "weight": "155 lbs",
+    "height": "5'4\"",
+    "mets": 10.5,
+    "max_hr": 158,
+    "symptoms": {
+      "Chest Pain": "Not present",
+      "Shortness of Breath": "Mild (appropriate for exertion)",
+      "Dizziness": "Not present",
+      "Nausea": "Not present",
+      "Palpitations": "Not reproduced",
+      "Fatigue": "Present at peak exercise"
+    },
+    "test_result": "NEGATIVE for exercise-induced myocardial ischemia",
+    "rest_ef": "60-65%",
+    "stress_ef": "65-70%",
+    "recommendations": [
+      "Return to full activity without restriction.",
+      "Reassurance provided regarding the likely benign nature of symptoms.",
+      "Continue current risk factor modification for hyperlipidemia.",
+      "Routine follow-up with referring physician."
+    ]
+  },
+  {
+    "name": "Patricia Anderson",
+    "patient_id": "PA-48291",
+    "study_date": "November 11, 2024",
+    "heart_rate": 78,
+    "blood_pressure": "135/82",
+    "mets": 5.8,
+    "max_hr": 135,
+    "clinical_indication": "Worsening exertional chest pain, rule out ischemia.",
+    "test_result": "POSITIVE for severe, widespread multi-vessel ischemia",
+    "recommendations": [
+      "Urgent Cardiology evaluation",
+      "Consideration for coronary angiography"
+    ]
+  },
+  {
+    "name": "Elizabeth Brown",
+    "patient_id": "EB-992415",
+    "study_date": "November 11, 2024",
+    "study_type": "Exercise Gated SPECT Sestamibi",
+    "heart_rate": 74,
+    "blood_pressure": "132/82",
+    "max_hr": 135,
+    "test_result": "POSITIVE for severe multi-vessel coronary artery disease",
+    "recommendations": [
+      "Immediate admission to Cardiac Step-down Unit or CCU",
+      "Initiate ACS medical management protocol",
+      "URGENT Coronary Angiography recommended",
+      "Strict bed rest and monitoring"
+    ],
+    "gender": "Female",
+    "age_group": "Elderly (70+ years)",
+    "condition_category": "Severe Multi-vessel Coronary Artery Disease (Critical findings requiring surgical intervention)"
+  },
+  {
+    "name": "Robert Johnson",
+    "patient_id": "PC-194-2024",
+    "study_date": "November 11, 2024",
+    "study_type": "Exercise Stress Test with Myocardial Perfusion Imaging",
+    "heart_rate": 78,
+    "blood_pressure": "158/92",
+    "o2_sat": 96,
+    "weight": "195 lbs",
+    "height": "5'10\"",
+    "mets": 4.6,
+    "max_hr": 125,
+    "symptoms": {
+      "Chest Pain": "Present",
+      "Shortness of Breath": "Present (marked)"
+    },
+    "test_result": "POSITIVE for significant myocardial ischemia",
+    "recommendations": [
+      "Admit to hospital for immediate management and monitoring",
+      "URGENT cardiac catheterization recommended to define anatomy",
+      "Medical management initiated: Aspirin, Nitrates, and Beta-blockers.",
+      "Cardiology consultation pending."
+    ],
+    "gender": "Male",
+    "age_group": null,
+    "condition_category": "Severe Multi-vessel Coronary Artery Disease (Critical findings requiring surgical intervention)"
+  },
+  {
+    "name": "Linda Martinez",
+    "patient_id": "PC-102-2024",
+    "study_date": "October 12, 2024",
+    "study_type": "Exercise Stress Test with Stress Echocardiography",
+    "heart_rate": 68,
+    "blood_pressure": "130/78",
+    "o2_sat": 98,
+    "weight": "142 lbs",
+    "height": "5'3\"",
+    "mets": 7.5,
+    "max_hr": 150,
+    "symptoms": {
+      "Chest Pain": "Not present",
+      "Shortness of Breath": "Moderate",
+      "Dizziness": "Not present",
+      "Fatigue": "Mild"
+    },
+    "test_result": "NEGATIVE for exercise-induced myocardial ischemia",
+    "rest_ef": "60-65%",
+    "stress_ef": ">70%",
+    "recommendations": [
+      "Return to normal activities.",
+      "Risk factor modification (lipid and blood pressure control).",
+      "Follow up with referring physician as scheduled."
+    ],
+    "gender": "Female",
+    "age_group": "Middle-Aged (45-69 years)",
+    "condition_category": "Normal Cardiac Function (Symptoms ruled out, healthy baseline, discharge)"
+  }
+]

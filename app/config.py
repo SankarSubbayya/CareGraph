@@ -11,6 +11,11 @@ class Settings(BaseSettings):
     rocketride_uri: str = "http://localhost:5565"
     rocketride_apikey: str = ""
 
+    # GMI Cloud Inference
+    gmi_base_url: str = "https://api.gmi-serving.com/v1"
+    gmi_api_key: str = ""
+    gmi_model: str = "deepseek-ai/DeepSeek-R1"
+
     # App
     base_url: str = "http://localhost:8000"
     skip_auth: bool = True

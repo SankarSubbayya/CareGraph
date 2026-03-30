@@ -6,6 +6,7 @@
     <title>CareGraph — Graph-Powered Senior Care</title>
     <link rel="stylesheet" href="/static/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
 </head>
 <body>
     <nav class="sidebar">
@@ -14,8 +15,10 @@
         <a href="#" class="sidebar-item active" onclick="showPage('seniors')"><span class="sidebar-icon">👥</span> Seniors</a>
         <a href="#" class="sidebar-item" onclick="showPage('graph')"><span class="sidebar-icon">🔗</span> Graph View</a>
         <a href="#" class="sidebar-item" onclick="showPage('insights')"><span class="sidebar-icon">🧠</span> AI Insights</a>
+        <a href="#" class="sidebar-item" onclick="showPage('voice')"><span class="sidebar-icon">📞</span> Voice Calls</a>
+        <a href="#" class="sidebar-item" onclick="showPage('crew')"><span class="sidebar-icon">🤖</span> CrewAI Agents</a>
         <a href="#" class="sidebar-item" onclick="showPage('alerts')"><span class="sidebar-icon">🔔</span> Alerts <span id="alert-badge" class="nav-badge" style="display:none;">0</span></a>
-        <a href="#" class="sidebar-item" onclick="showPage('simulate')"><span class="sidebar-icon">📞</span> Simulate Call</a>
+        <a href="#" class="sidebar-item" onclick="showPage('simulate')"><span class="sidebar-icon">🎭</span> Simulate</a>
     </nav>
 
     <div class="main-content">
@@ -40,7 +43,7 @@
             </div>
         </div>
 
-        <!-- Page: Graph View -->
+        <!-- Page: Graph View (Interactive vis.js) -->
         <div id="page-graph" class="page">
             <div class="page-header"><h1>Care Network Graph</h1></div>
             <div class="graph-controls">
@@ -48,11 +51,20 @@
                 <button class="btn btn-primary" onclick="loadGraph()">View Graph</button>
             </div>
             <div id="graph-container" class="graph-container"></div>
+            <div id="graph-legend" class="graph-legend">
+                <span class="legend-item"><span class="legend-dot" style="background:#2563eb;"></span> Senior</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#16a34a;"></span> Medication</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#dc2626;"></span> Symptom</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#7c3aed;"></span> Condition</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#d97706;"></span> Family</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#0d9488;"></span> Service</span>
+                <span class="legend-item"><span class="legend-dot" style="background:#6366f1;"></span> CheckIn</span>
+            </div>
         </div>
 
         <!-- Page: AI Insights -->
         <div id="page-insights" class="page">
-            <div class="page-header"><h1>AI Insights (RocketRide)</h1></div>
+            <div class="page-header"><h1>AI Insights</h1></div>
             <div class="graph-controls">
                 <select id="insight-senior-select"><option value="">Select a senior...</option></select>
                 <button class="btn" onclick="loadDrugInteractions()">Drug Interactions</button>
@@ -61,6 +73,54 @@
                 <button class="btn btn-primary" onclick="loadCareRec()">AI Care Plan</button>
             </div>
             <div id="insights-content" class="insights-content"></div>
+        </div>
+
+        <!-- Page: Voice Calls (Bland AI) -->
+        <div id="page-voice" class="page">
+            <div class="page-header"><h1>Voice Calls (Bland AI)</h1></div>
+            <div class="graph-controls">
+                <select id="voice-senior-select"><option value="">Select a senior...</option></select>
+                <select id="voice-select">
+                    <option value="June">June (warm, female)</option>
+                    <option value="Josh">Josh (friendly, male)</option>
+                    <option value="Nat">Nat (calm, female)</option>
+                    <option value="Paige">Paige (gentle, female)</option>
+                </select>
+                <button class="btn btn-primary" onclick="initiateCall()">Call Senior</button>
+                <button class="btn" onclick="callAllSeniors()">Call All</button>
+            </div>
+            <div id="voice-status" class="voice-status"></div>
+            <div class="page-header" style="margin-top:1.5rem;"><h2>Recent Calls</h2></div>
+            <div id="voice-calls-list"></div>
+        </div>
+
+        <!-- Page: CrewAI Agents -->
+        <div id="page-crew" class="page">
+            <div class="page-header"><h1>CrewAI Multi-Agent Pipeline</h1></div>
+            <div class="crew-info">
+                <div class="crew-agents-row">
+                    <div class="agent-card"><div class="agent-icon">📞</div><div class="agent-name">Check-in Agent</div><div class="agent-desc">Bland AI voice calls</div></div>
+                    <div class="agent-arrow">→</div>
+                    <div class="agent-card"><div class="agent-icon">🔍</div><div class="agent-name">Analysis Agent</div><div class="agent-desc">NLP extraction</div></div>
+                    <div class="agent-arrow">→</div>
+                    <div class="agent-card"><div class="agent-icon">🔗</div><div class="agent-name">Graph Agent</div><div class="agent-desc">Neo4j queries</div></div>
+                    <div class="agent-arrow">→</div>
+                    <div class="agent-card"><div class="agent-icon">💡</div><div class="agent-name">Recommendation Agent</div><div class="agent-desc">GMI Cloud LLM</div></div>
+                    <div class="agent-arrow">→</div>
+                    <div class="agent-card"><div class="agent-icon">🚨</div><div class="agent-name">Alert Agent</div><div class="agent-desc">Safety monitor</div></div>
+                </div>
+            </div>
+            <div class="graph-controls" style="margin-top:1.5rem;">
+                <select id="crew-senior-select"><option value="">Select a senior...</option></select>
+                <button class="btn btn-primary" onclick="runCrewCheckin()">Full Check-in (5 Agents)</button>
+                <button class="btn" onclick="runCrewAnalyze()">Analyze Transcript</button>
+                <button class="btn" onclick="runCrewInsights()">Graph Insights</button>
+            </div>
+            <div id="crew-transcript-area" style="display:none;margin-bottom:1rem;">
+                <textarea id="crew-transcript" rows="3" placeholder="Enter transcript for analysis..." style="width:100%;padding:0.5rem;border:1px solid var(--gray-300);border-radius:var(--radius);font-size:0.9rem;"></textarea>
+            </div>
+            <div id="crew-status" class="crew-status"></div>
+            <div id="crew-result"></div>
         </div>
 
         <!-- Page: Alerts -->

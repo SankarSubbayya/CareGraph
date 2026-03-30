@@ -40,6 +40,11 @@ app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 
 @app.get("/")
+async def serve_landing():
+    return FileResponse(str(FRONTEND_DIR / "landing.html"))
+
+
+@app.get("/dashboard")
 async def serve_dashboard():
     return FileResponse(str(FRONTEND_DIR / "index.html"))
 

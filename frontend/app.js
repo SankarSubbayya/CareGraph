@@ -15,8 +15,9 @@ function showPage(id) {
     const page = document.getElementById('page-' + id);
     if (page) page.classList.add('active');
     document.querySelectorAll('.sidebar-item').forEach(i => { if (i.textContent.trim().toLowerCase().includes(id)) i.classList.add('active'); });
-    if (id === 'graph' || id === 'insights' || id === 'simulate') populateSelects();
+    if (['graph', 'insights', 'simulate', 'voice', 'crew'].includes(id)) populateSelects();
     if (id === 'alerts') loadAlertsPage();
+    if (id === 'voice') loadRecentCalls();
 }
 
 // ── Seniors ──
@@ -48,7 +49,8 @@ async function loadSeniors() {
                 <td>${score === '—' ? '—' : score+'/10'}</td>
                 <td style="max-width:200px;font-size:0.85rem;">${s.medications.join(', ') || '—'}</td>
                 <td><button class="btn btn-small" onclick="showPage('graph');document.getElementById('graph-senior-select').value='${s.phone}';loadGraph()">Graph</button>
-                    <button class="btn btn-small" onclick="showPage('insights');document.getElementById('insight-senior-select').value='${s.phone}'">Insights</button></td>
+                    <button class="btn btn-small" onclick="showPage('insights');document.getElementById('insight-senior-select').value='${s.phone}'">Insights</button>
+                    <button class="btn btn-small" onclick="showPage('voice');document.getElementById('voice-senior-select').value='${s.phone}'">Call</button></td>
             </tr>`;
         }).join('');
 
@@ -64,28 +66,66 @@ async function loadSeniors() {
     } catch(e) { console.error(e); document.getElementById('seniors-tbody').innerHTML = '<tr><td colspan="5" class="empty-state">Failed to load. Is the server running?</td></tr>'; }
 }
 
-// ── Graph View ──
+// ── Interactive Graph View (vis.js) ──
+const NODE_COLORS = {
+    Senior: { background: '#2563eb', border: '#1d4ed8', font: { color: '#fff' } },
+    Medication: { background: '#16a34a', border: '#15803d', font: { color: '#fff' } },
+    Symptom: { background: '#dc2626', border: '#b91c1c', font: { color: '#fff' } },
+    Condition: { background: '#7c3aed', border: '#6d28d9', font: { color: '#fff' } },
+    FamilyMember: { background: '#d97706', border: '#b45309', font: { color: '#fff' } },
+    Service: { background: '#0d9488', border: '#0f766e', font: { color: '#fff' } },
+    CheckIn: { background: '#6366f1', border: '#4f46e5', font: { color: '#fff' } },
+    Alert: { background: '#ef4444', border: '#dc2626', font: { color: '#fff' } },
+};
+const NODE_SHAPES = {
+    Senior: 'circle', Medication: 'box', Symptom: 'diamond',
+    Condition: 'triangle', FamilyMember: 'star', Service: 'hexagon',
+    CheckIn: 'dot', Alert: 'square',
+};
+
 async function loadGraph() {
     const phone = document.getElementById('graph-senior-select').value;
     if (!phone) return;
+    const container = document.getElementById('graph-container');
+    container.innerHTML = '<p class="empty-state">Loading graph...</p>';
     try {
         const data = await fetchJSON(`/api/graph/care-network/${encodeURIComponent(phone)}`);
-        const container = document.getElementById('graph-container');
         if (!data.nodes.length) { container.innerHTML = '<p class="empty-state">No graph data</p>'; return; }
-        let html = '<div style="margin-bottom:1rem;"><strong>Nodes:</strong></div><div>';
-        data.nodes.forEach(n => { html += `<span class="graph-node ${n.type}">${n.type === 'Senior' ? '👴' : n.type === 'Medication' ? '💊' : n.type === 'Symptom' ? '🔴' : n.type === 'FamilyMember' ? '👨‍👩‍👧' : '📋'} ${n.label}</span>`; });
-        html += '</div><div style="margin-top:1.5rem;"><strong>Relationships:</strong></div><div style="margin-top:0.5rem;">';
-        data.edges.forEach(e => {
-            const fromNode = data.nodes.find(n => n.id === e.from);
-            const toNode = data.nodes.find(n => n.id === e.to);
-            html += `<div style="font-size:0.85rem;padding:0.2rem 0;">${fromNode?.label || e.from} <span class="graph-edge">—[${e.label}]→</span> ${toNode?.label || e.to}</div>`;
-        });
-        html += '</div>';
-        container.innerHTML = html;
 
-        // Update node count
         document.getElementById('stat-nodes').textContent = data.nodes.length;
-    } catch(e) { document.getElementById('graph-container').innerHTML = `<p class="empty-state">Error: ${e.message}</p>`; }
+
+        const nodes = new vis.DataSet(data.nodes.map(n => ({
+            id: n.id,
+            label: n.label,
+            shape: NODE_SHAPES[n.type] || 'dot',
+            color: NODE_COLORS[n.type] || { background: '#6b7280', border: '#4b5563' },
+            font: NODE_COLORS[n.type]?.font || { color: '#fff' },
+            size: n.type === 'Senior' ? 35 : 25,
+            title: `${n.type}: ${n.label}`,
+        })));
+
+        const edges = new vis.DataSet(data.edges.map((e, i) => ({
+            id: i,
+            from: e.from,
+            to: e.to,
+            label: e.label,
+            arrows: 'to',
+            color: { color: '#9ca3af', highlight: '#2563eb' },
+            font: { size: 10, color: '#6b7280', strokeWidth: 2, strokeColor: '#fff' },
+        })));
+
+        const options = {
+            physics: {
+                solver: 'forceAtlas2Based',
+                forceAtlas2Based: { gravitationalConstant: -40, springLength: 150 },
+                stabilization: { iterations: 100 },
+            },
+            interaction: { hover: true, tooltipDelay: 100 },
+            layout: { improvedLayout: true },
+        };
+
+        new vis.Network(container, { nodes, edges }, options);
+    } catch(e) { container.innerHTML = `<p class="empty-state">Error: ${e.message}</p>`; }
 }
 
 // ── AI Insights ──
@@ -93,7 +133,7 @@ async function loadDrugInteractions() {
     const phone = document.getElementById('insight-senior-select').value;
     if (!phone) return;
     const el = document.getElementById('insights-content');
-    el.innerHTML = 'Loading drug interactions...';
+    el.innerHTML = '<p class="loading-text">Loading drug interactions...</p>';
     try {
         const data = await fetchJSON(`/api/graph/drug-interactions/${encodeURIComponent(phone)}`);
         if (!data.interactions.length) { el.innerHTML = '<p>No drug interactions detected.</p>'; return; }
@@ -107,7 +147,7 @@ async function loadSideEffects() {
     const phone = document.getElementById('insight-senior-select').value;
     if (!phone) return;
     const el = document.getElementById('insights-content');
-    el.innerHTML = 'Checking side effects...';
+    el.innerHTML = '<p class="loading-text">Checking side effects...</p>';
     try {
         const data = await fetchJSON(`/api/graph/side-effects/${encodeURIComponent(phone)}`);
         if (!data.side_effects.length) { el.innerHTML = '<p>No side effect matches found.</p>'; return; }
@@ -121,7 +161,7 @@ async function loadSimilarSymptoms() {
     const phone = document.getElementById('insight-senior-select').value;
     if (!phone) return;
     const el = document.getElementById('insights-content');
-    el.innerHTML = 'Finding similar symptoms...';
+    el.innerHTML = '<p class="loading-text">Finding similar symptoms...</p>';
     try {
         const data = await fetchJSON(`/api/graph/similar-symptoms/${encodeURIComponent(phone)}`);
         if (!data.similar.length) { el.innerHTML = '<p>No other seniors reported similar symptoms.</p>'; return; }
@@ -134,12 +174,104 @@ async function loadCareRec() {
     const phone = document.getElementById('insight-senior-select').value;
     if (!phone) return;
     const el = document.getElementById('insights-content');
-    el.innerHTML = 'Generating AI care recommendation...';
+    el.innerHTML = '<p class="loading-text">Generating AI care recommendation...</p>';
     try {
         const data = await fetchJSON(`/api/graph/care-recommendation/${encodeURIComponent(phone)}`);
-        el.innerHTML = `<h3>AI Care Plan for ${data.senior}</h3><div style="white-space:pre-wrap;line-height:1.6;">${data.recommendation || 'No recommendation available (RocketRide API key needed)'}</div>
+        el.innerHTML = `<h3>AI Care Plan for ${data.senior}</h3><div style="white-space:pre-wrap;line-height:1.6;">${data.recommendation || 'No recommendation available (set GMI_API_KEY in .env)'}</div>
         <h4 style="margin-top:1.5rem;">Graph Insights</h4><pre style="background:var(--gray-50);padding:1rem;border-radius:var(--radius);font-size:0.8rem;">${JSON.stringify(data.graph_insights, null, 2)}</pre>`;
     } catch(e) { el.innerHTML = `Error: ${e.message}`; }
+}
+
+// ── Voice Calls (Bland AI) ──
+async function initiateCall() {
+    const phone = document.getElementById('voice-senior-select').value;
+    const voice = document.getElementById('voice-select').value;
+    if (!phone) return alert('Select a senior first');
+    const el = document.getElementById('voice-status');
+    el.innerHTML = '<div class="status-card calling"><span class="pulse"></span> Initiating call...</div>';
+    try {
+        const data = await fetchJSON(`/api/voice/call/${encodeURIComponent(phone)}?voice=${voice}`, { method: 'POST' });
+        el.innerHTML = `<div class="status-card success">
+            <strong>Call initiated!</strong><br>
+            Senior: ${data.senior}<br>
+            Call ID: <code>${data.call_id}</code><br>
+            Status: ${data.message}
+        </div>`;
+        setTimeout(loadRecentCalls, 3000);
+    } catch(e) { el.innerHTML = `<div class="status-card error">Failed: ${e.message}</div>`; }
+}
+
+async function callAllSeniors() {
+    if (!confirm('This will call ALL registered seniors. Continue?')) return;
+    const voice = document.getElementById('voice-select').value;
+    const el = document.getElementById('voice-status');
+    el.innerHTML = '<div class="status-card calling"><span class="pulse"></span> Calling all seniors...</div>';
+    try {
+        const data = await fetchJSON(`/api/voice/call-all?voice=${voice}`, { method: 'POST' });
+        el.innerHTML = `<div class="status-card success">
+            <strong>${data.calls_initiated} calls initiated!</strong><br>
+            ${data.results.map(r => `${r.senior}: ${r.status} (${r.call_id || 'N/A'})`).join('<br>')}
+        </div>`;
+        setTimeout(loadRecentCalls, 5000);
+    } catch(e) { el.innerHTML = `<div class="status-card error">Failed: ${e.message}</div>`; }
+}
+
+async function loadRecentCalls() {
+    const el = document.getElementById('voice-calls-list');
+    try {
+        const data = await fetchJSON('/api/voice/calls?limit=10');
+        const calls = data.calls || data;
+        if (!calls || !calls.length) { el.innerHTML = '<p class="empty-state">No calls yet. Initiate a call above.</p>'; return; }
+        el.innerHTML = calls.map(c => `<div class="call-card">
+            <div class="call-header">
+                <strong>${c.to || 'Unknown'}</strong>
+                <span class="status-badge ${c.status === 'completed' ? 'good' : c.status === 'failed' ? 'danger' : 'neutral'}"><span class="dot"></span> ${c.status}</span>
+            </div>
+            <div class="call-meta">
+                ${c.call_length ? `Duration: ${c.call_length} min` : ''}
+                ${c.created_at ? ` | ${new Date(c.created_at).toLocaleString()}` : ''}
+            </div>
+            ${c.summary ? `<div class="call-summary">${c.summary}</div>` : ''}
+        </div>`).join('');
+    } catch(e) { el.innerHTML = '<p class="empty-state">Could not load calls. Is BLAND_API_KEY set?</p>'; }
+}
+
+// ── CrewAI Agents ──
+function runCrewCheckin() {
+    const phone = document.getElementById('crew-senior-select').value;
+    if (!phone) return alert('Select a senior first');
+    document.getElementById('crew-transcript-area').style.display = 'none';
+    runCrew(`/api/crew/checkin/${encodeURIComponent(phone)}`, 'Full Check-in (5 Agents)');
+}
+
+function runCrewAnalyze() {
+    const phone = document.getElementById('crew-senior-select').value;
+    if (!phone) return alert('Select a senior first');
+    document.getElementById('crew-transcript-area').style.display = 'block';
+    const transcript = document.getElementById('crew-transcript').value || 'I feel a bit dizzy today. Yes I took my medications but my head hurts.';
+    runCrew(`/api/crew/analyze/${encodeURIComponent(phone)}?transcript=${encodeURIComponent(transcript)}`, 'Analyze Transcript (4 Agents)');
+}
+
+function runCrewInsights() {
+    const phone = document.getElementById('crew-senior-select').value;
+    if (!phone) return alert('Select a senior first');
+    document.getElementById('crew-transcript-area').style.display = 'none';
+    runCrew(`/api/crew/insights/${encodeURIComponent(phone)}`, 'Graph Insights (2 Agents)');
+}
+
+async function runCrew(url, label) {
+    const statusEl = document.getElementById('crew-status');
+    const resultEl = document.getElementById('crew-result');
+    statusEl.innerHTML = `<div class="status-card calling"><span class="pulse"></span> Running ${label}... This may take a minute.</div>`;
+    resultEl.innerHTML = '';
+    try {
+        const data = await fetchJSON(url, { method: 'POST' });
+        statusEl.innerHTML = `<div class="status-card success"><strong>${label} — Complete!</strong><br>Senior: ${data.senior} | Phone: ${data.phone}</div>`;
+        resultEl.innerHTML = `<div class="crew-output"><h3>Crew Output</h3><pre>${typeof data.crew_output === 'string' ? data.crew_output : JSON.stringify(data, null, 2)}</pre></div>`;
+        loadSeniors();
+    } catch(e) {
+        statusEl.innerHTML = `<div class="status-card error">Failed: ${e.message}</div>`;
+    }
 }
 
 // ── Simulate Call ──
@@ -148,12 +280,23 @@ async function simulateCall() {
     const transcript = document.getElementById('sim-transcript').value;
     if (!phone || !transcript) return alert('Select a senior and enter a transcript');
     const el = document.getElementById('sim-result');
-    el.textContent = 'Processing...';
+    el.innerHTML = '<p class="loading-text">Processing...</p>';
     try {
         const data = await fetchJSON(`/api/checkins/simulate/${encodeURIComponent(phone)}?transcript=${encodeURIComponent(transcript)}`, { method: 'POST' });
-        el.textContent = JSON.stringify(data, null, 2);
+        el.innerHTML = `<div class="sim-result-card">
+            <h3>Check-in Result</h3>
+            <div class="sim-grid">
+                <div class="sim-item"><span class="sim-label">Mood</span><span class="status-badge ${data.analysis.mood === 'happy' ? 'good' : data.analysis.mood === 'concerning' ? 'danger' : data.analysis.mood === 'sad' ? 'warning' : 'neutral'}"><span class="dot"></span> ${data.analysis.mood}</span></div>
+                <div class="sim-item"><span class="sim-label">Wellness</span><strong>${data.analysis.wellness_score}/10</strong></div>
+                <div class="sim-item"><span class="sim-label">Medications</span><span>${data.analysis.medication_taken === true ? '✅ Taken' : data.analysis.medication_taken === false ? '❌ Missed' : '❓ Unknown'}</span></div>
+                <div class="sim-item"><span class="sim-label">Alerts</span><strong>${data.alerts}</strong></div>
+            </div>
+            ${data.analysis.concerns.length ? `<div style="margin-top:1rem;"><strong>Concerns:</strong> ${data.analysis.concerns.join(', ')}</div>` : ''}
+            ${data.analysis.service_requests.length ? `<div style="margin-top:0.5rem;"><strong>Service Needs:</strong> ${data.analysis.service_requests.map(r => r.label).join(', ')}</div>` : ''}
+            <div style="margin-top:0.5rem;color:var(--gray-500);font-size:0.85rem;">${data.analysis.summary}</div>
+        </div>`;
         loadSeniors();
-    } catch(e) { el.textContent = `Error: ${e.message}`; }
+    } catch(e) { el.innerHTML = `<div class="status-card error">Error: ${e.message}</div>`; }
 }
 
 // ── Add Senior ──
@@ -187,7 +330,7 @@ async function ackAlert(id) { await fetchJSON(`/api/alerts/${encodeURIComponent(
 async function populateSelects() {
     try {
         const seniors = await fetchJSON('/api/seniors');
-        ['graph-senior-select', 'insight-senior-select', 'sim-senior-select'].forEach(id => {
+        ['graph-senior-select', 'insight-senior-select', 'sim-senior-select', 'voice-senior-select', 'crew-senior-select'].forEach(id => {
             const sel = document.getElementById(id);
             if (!sel) return;
             const current = sel.value;

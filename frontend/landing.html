@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareGraph — AI-Powered Senior Care</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #111827; }
+
+        /* Hero */
+        .hero {
+            min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 50%, #fefce8 100%);
+            text-align: center; padding: 2rem;
+        }
+        .hero-badge { display: inline-block; background: #dbeafe; color: #2563eb; font-size: 0.85rem; font-weight: 600; padding: 0.4rem 1rem; border-radius: 20px; margin-bottom: 1.5rem; }
+        .hero h1 { font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 1.25rem; max-width: 700px; }
+        .hero h1 span { color: #2563eb; }
+        .hero p { font-size: 1.25rem; color: #4b5563; max-width: 600px; margin-bottom: 2rem; line-height: 1.6; }
+        .hero-buttons { display: flex; gap: 1rem; }
+        .btn-hero { padding: 0.8rem 2rem; border-radius: 10px; font-size: 1rem; font-weight: 600; cursor: pointer; border: none; text-decoration: none; }
+        .btn-hero.primary { background: #2563eb; color: white; }
+        .btn-hero.primary:hover { background: #1d4ed8; }
+        .btn-hero.secondary { background: white; color: #374151; border: 1px solid #d1d5db; }
+        .btn-hero.secondary:hover { background: #f9fafb; }
+
+        /* Problem */
+        .problem { padding: 5rem 2rem; background: #fff; }
+        .problem .container { max-width: 1000px; margin: 0 auto; }
+        .section-label { font-size: 0.85rem; font-weight: 600; color: #dc2626; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+        .problem h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+        .problem .subtitle { font-size: 1.15rem; color: #6b7280; margin-bottom: 3rem; max-width: 700px; }
+
+        .problem-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+        .problem-card { background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; padding: 1.5rem; }
+        .problem-card .icon { font-size: 2rem; margin-bottom: 0.75rem; }
+        .problem-card h3 { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .problem-card p { font-size: 0.9rem; color: #6b7280; line-height: 1.5; }
+        .problem-stat { font-size: 1.5rem; font-weight: 800; color: #dc2626; }
+
+        /* Solution */
+        .solution { padding: 5rem 2rem; background: #f9fafb; }
+        .solution .container { max-width: 1000px; margin: 0 auto; }
+        .solution h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+        .solution .subtitle { font-size: 1.15rem; color: #6b7280; margin-bottom: 3rem; max-width: 700px; }
+
+        .flow-steps { display: flex; gap: 1rem; align-items: flex-start; flex-wrap: wrap; }
+        .flow-step { flex: 1; min-width: 200px; background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; text-align: center; position: relative; }
+        .flow-step .step-num { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 50%; background: #2563eb; color: white; font-weight: 700; font-size: 0.9rem; margin-bottom: 0.75rem; }
+        .flow-step .step-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+        .flow-step h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; }
+        .flow-step p { font-size: 0.85rem; color: #6b7280; line-height: 1.5; }
+        .flow-arrow { display: flex; align-items: center; font-size: 1.5rem; color: #d1d5db; font-weight: bold; padding-top: 3rem; }
+
+        /* Tech */
+        .tech { padding: 5rem 2rem; background: #fff; }
+        .tech .container { max-width: 1000px; margin: 0 auto; text-align: center; }
+        .tech h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+        .tech .subtitle { font-size: 1.15rem; color: #6b7280; margin-bottom: 3rem; }
+
+        .tech-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; text-align: left; }
+        .tech-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; }
+        .tech-card .tech-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.25rem; }
+        .tech-card .tech-role { font-size: 0.8rem; color: #2563eb; font-weight: 600; text-transform: uppercase; margin-bottom: 0.5rem; }
+        .tech-card p { font-size: 0.85rem; color: #6b7280; line-height: 1.5; }
+
+        /* Graph */
+        .graph-section { padding: 5rem 2rem; background: #f0fdf4; }
+        .graph-section .container { max-width: 1000px; margin: 0 auto; }
+        .graph-section h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+        .graph-section .subtitle { font-size: 1.15rem; color: #6b7280; margin-bottom: 2rem; max-width: 700px; }
+        .graph-demo { background: white; border: 1px solid #e5e7eb; border-radius: 12px; padding: 2rem; font-family: monospace; font-size: 0.9rem; line-height: 2; }
+        .graph-demo .node { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-weight: 600; }
+        .graph-demo .senior { background: #dbeafe; color: #2563eb; }
+        .graph-demo .med { background: #dcfce7; color: #16a34a; }
+        .graph-demo .sym { background: #fee2e2; color: #dc2626; }
+        .graph-demo .cond { background: #f3e8ff; color: #7c3aed; }
+        .graph-demo .rel { color: #9ca3af; font-size: 0.8rem; }
+        .graph-demo .insight { background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 0.75rem 1rem; margin-top: 1rem; font-family: -apple-system, sans-serif; }
+        .graph-demo .insight strong { color: #b45309; }
+
+        /* Impact */
+        .impact { padding: 5rem 2rem; background: #fff; }
+        .impact .container { max-width: 1000px; margin: 0 auto; }
+        .impact h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 2.5rem; text-align: center; }
+        .impact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+        .impact-card { border-radius: 12px; padding: 1.5rem; }
+        .impact-card.before { background: #fef2f2; border: 1px solid #fecaca; }
+        .impact-card.after { background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .impact-card h3 { font-size: 1rem; font-weight: 600; margin-bottom: 1rem; }
+        .impact-card h3.red { color: #dc2626; }
+        .impact-card h3.green { color: #16a34a; }
+        .impact-card ul { list-style: none; }
+        .impact-card li { padding: 0.4rem 0; font-size: 0.9rem; color: #4b5563; }
+        .impact-card li::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 0.5rem; vertical-align: middle; }
+        .impact-card.before li::before { background: #dc2626; }
+        .impact-card.after li::before { background: #16a34a; }
+
+        /* CTA */
+        .cta { padding: 5rem 2rem; background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%); text-align: center; color: white; }
+        .cta h2 { font-size: 2.5rem; font-weight: 700; margin-bottom: 1rem; }
+        .cta p { font-size: 1.15rem; opacity: 0.9; margin-bottom: 2rem; }
+        .cta .btn-hero.primary { background: white; color: #2563eb; }
+        .cta .btn-hero.primary:hover { background: #f0f0f0; }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2.2rem; }
+            .problem-grid, .tech-grid, .impact-grid { grid-template-columns: 1fr; }
+            .flow-steps { flex-direction: column; }
+            .flow-arrow { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero">
+    <div class="hero-badge">HackWithBay 2.0 — Neo4j + RocketRide AI</div>
+    <h1>Every senior deserves a <span>daily check-in</span></h1>
+    <p>CareGraph is an AI care companion that calls seniors every day, builds a knowledge graph of their health, and alerts families before problems become emergencies.</p>
+    <div class="hero-buttons">
+        <a href="/dashboard" class="btn-hero primary">Open Dashboard</a>
+        <a href="#problem" class="btn-hero secondary">Learn More</a>
+    </div>
+</section>
+
+<!-- Problem -->
+<section class="problem" id="problem">
+    <div class="container">
+        <div class="section-label">The Problem</div>
+        <h2>Seniors are falling through the cracks</h2>
+        <p class="subtitle">Between doctor visits, millions of seniors living alone have no one monitoring their daily health. Symptoms build silently. Medications interact dangerously. Falls go unnoticed.</p>
+        <div class="problem-grid">
+            <div class="problem-card">
+                <div class="icon">👴</div>
+                <div class="problem-stat">55M+</div>
+                <h3>Seniors with chronic conditions</h3>
+                <p>Most need daily medication management and health monitoring — but visits happen only every 3 months.</p>
+            </div>
+            <div class="problem-card">
+                <div class="icon">💊</div>
+                <div class="problem-stat">125,000</div>
+                <h3>Deaths from drug interactions/year</h3>
+                <p>Seniors on multiple medications face dangerous interactions that go undetected until an ER visit.</p>
+            </div>
+            <div class="problem-card">
+                <div class="icon">😰</div>
+                <div class="problem-stat">24+ hrs/week</div>
+                <h3>Family caregiver burden</h3>
+                <p>Family members juggle work and caregiving. Many burn out. Guilt and worry are constant.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Solution -->
+<section class="solution" id="solution">
+    <div class="container">
+        <div class="section-label" style="color:#2563eb;">The Solution</div>
+        <h2>CareGraph: AI that cares, daily</h2>
+        <p class="subtitle">An automated care companion that checks in every day, builds a health knowledge graph, and gives families and doctors real-time intelligence.</p>
+        <div class="flow-steps">
+            <div class="flow-step">
+                <div class="step-num">1</div>
+                <div class="step-icon">📞</div>
+                <h3>Bland AI Calls</h3>
+                <p>A warm AI voice agent calls the senior every morning. Asks about mood, medications, symptoms, and needs.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="step-num">2</div>
+                <div class="step-icon">🔗</div>
+                <h3>Neo4j Builds the Graph</h3>
+                <p>Every symptom, medication, and interaction is stored as connected nodes. The graph reveals hidden patterns.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="step-num">3</div>
+                <div class="step-icon">🧠</div>
+                <h3>RocketRide AI Reasons</h3>
+                <p>AI pipelines explain drug interactions, detect side effects, and generate personalized care plans.</p>
+            </div>
+            <div class="flow-arrow">→</div>
+            <div class="flow-step">
+                <div class="step-num">4</div>
+                <div class="step-icon">🚨</div>
+                <h3>Family Gets Alerted</h3>
+                <p>Emergencies trigger instant alerts. Doctors get weekly insights. Families get peace of mind.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Graph Intelligence -->
+<section class="graph-section" id="graph">
+    <div class="container">
+        <div class="section-label" style="color:#16a34a;">Graph Intelligence</div>
+        <h2>Healthcare is about relationships</h2>
+        <p class="subtitle">Traditional databases store records. Neo4j stores connections — and connections save lives.</p>
+        <div class="graph-demo">
+            <span class="node senior">Dorothy</span> <span class="rel">—[TAKES]→</span> <span class="node med">Lisinopril 10mg</span><br>
+            <span class="node senior">Dorothy</span> <span class="rel">—[REPORTED]→</span> <span class="node sym">dizziness</span><br>
+            <span class="node med">Lisinopril 10mg</span> <span class="rel">—[SIDE_EFFECT]→</span> <span class="node sym">dizziness</span><br>
+            <span class="node sym">dizziness</span> <span class="rel">—[SUGGESTS]→</span> <span class="node cond">Hypotension</span>
+            <div class="insight">
+                <strong>Graph Insight:</strong> Dorothy's dizziness may be a side effect of Lisinopril. This was detected automatically by traversing the graph — not by keyword matching. Recommend discussing with her doctor.
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Tech Stack -->
+<section class="tech" id="tech">
+    <div class="container">
+        <div class="section-label" style="color:#7c3aed;">Technology</div>
+        <h2>Built with purpose</h2>
+        <p class="subtitle">Every technology chosen to serve a specific role in the care pipeline.</p>
+        <div class="tech-grid">
+            <div class="tech-card">
+                <div class="tech-role">Graph Database</div>
+                <div class="tech-name">Neo4j Aura</div>
+                <p>Models the care network: seniors, medications, symptoms, conditions, family. 9 node types, 9 relationship types. Cypher queries detect drug interactions and side effects in milliseconds.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-role">AI Pipelines</div>
+                <div class="tech-name">RocketRide AI</div>
+                <p>Visual pipeline orchestration. Four .pipe files route prompts through Gemini LLM for transcript analysis, drug explanations, care plans, and condition suggestions.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-role">Voice Agent</div>
+                <div class="tech-name">Bland AI</div>
+                <p>Automated phone calls with warm, patient AI voices. Asks about mood, medications, symptoms. Transcripts arrive via webhook for instant processing.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-role">LLM Inference</div>
+                <div class="tech-name">GMI Cloud</div>
+                <p>DeepSeek-R1 via OpenAI-compatible API. Powers CrewAI agents and serves as fallback when RocketRide is unavailable.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-role">Agent Orchestration</div>
+                <div class="tech-name">CrewAI</div>
+                <p>5 specialized agents collaborate: Check-in, Analysis, Graph, Recommendation, and Alert. Sequential pipeline ensures thorough care analysis.</p>
+            </div>
+            <div class="tech-card">
+                <div class="tech-role">Backend + Frontend</div>
+                <div class="tech-name">FastAPI + vis.js</div>
+                <p>Python REST API with 34 endpoints. Interactive graph visualization. Real-time dashboard for families and care providers.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Impact -->
+<section class="impact" id="impact">
+    <div class="container">
+        <h2>The difference CareGraph makes</h2>
+        <div class="impact-grid">
+            <div class="impact-card before">
+                <h3 class="red">Without CareGraph</h3>
+                <ul>
+                    <li>Family calls once a day — if they remember</li>
+                    <li>Doctor sees patient every 3 months</li>
+                    <li>Drug interactions discovered at the ER</li>
+                    <li>Falls discovered hours later</li>
+                    <li>Side effects blamed on "getting older"</li>
+                    <li>Care is reactive — after something goes wrong</li>
+                </ul>
+            </div>
+            <div class="impact-card after">
+                <h3 class="green">With CareGraph</h3>
+                <ul>
+                    <li>AI calls every morning automatically</li>
+                    <li>Doctor gets weekly graph intelligence reports</li>
+                    <li>Drug interactions caught on day one</li>
+                    <li>Emergency alerts in under 2 seconds</li>
+                    <li>Graph links symptoms to medications instantly</li>
+                    <li>Care is proactive — problems caught early</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta">
+    <h2>Because every senior deserves a daily check-in</h2>
+    <p>CareGraph — Graph-powered senior care intelligence</p>
+    <a href="/dashboard" class="btn-hero primary">Open Dashboard</a>
+</section>
+
+</body>
+</html>

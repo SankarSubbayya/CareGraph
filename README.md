@@ -6,11 +6,39 @@ Graph-powered senior care intelligence with Neo4j + RocketRide AI. Models the co
 
 ```mermaid
 flowchart TB
-    subgraph Users["👥 Users"]
-        Family["👨‍👩‍👧 Family\n(Dashboard)"]
+    subgraph Users["Users"]
+        Family["Family\n(Dashboard)"]
+        SeniorPhone["Senior\n(Phone)"]
     end
 
-    subgraph Neo4j["🔗 Neo4j (Graph Database)"]
+    subgraph BlandAI["Bland AI (Voice Agent)"]
+        VoiceCall["Automated\nPhone Call"]
+        Webhook["Webhook\n(Transcript)"]
+    end
+
+    subgraph CrewAI["CrewAI (Multi-Agent Orchestration)"]
+        Agent1["Check-in Agent\n(Bland AI calls)"]
+        Agent2["Analysis Agent\n(NLP extraction)"]
+        Agent3["Graph Agent\n(Neo4j queries)"]
+        Agent4["Recommendation Agent\n(AI care plans)"]
+        Agent5["Alert Agent\n(Safety monitor)"]
+
+        Agent1 -->|transcript| Agent2
+        Agent2 -->|symptoms, mood| Agent3
+        Agent3 -->|graph insights| Agent4
+        Agent4 -->|care plan| Agent5
+    end
+
+    subgraph API["FastAPI Backend"]
+        CRUD["Senior CRUD"]
+        CheckinAPI["Check-in\nProcessing"]
+        GraphAPI["Graph\nIntelligence"]
+        AlertAPI["Alert Engine"]
+        VoiceAPI["Voice\nEndpoints"]
+        CrewAPI["Crew\nEndpoints"]
+    end
+
+    subgraph Neo4j["Neo4j Aura (Graph Database)"]
         Senior["(:Senior)"]
         Med["(:Medication)"]
         Sym["(:Symptom)"]
@@ -32,26 +60,57 @@ flowchart TB
         Sym -->|"SUGGESTS"| Cond
     end
 
-    subgraph RocketRide["🚀 RocketRide AI"]
-        Analyze["Transcript Analysis"]
-        DrugAI["Drug Interaction\nExplanation"]
-        CareAI["Care Plan\nGeneration"]
-        CondAI["Condition\nSuggestion"]
-    end
-
-    subgraph API["⚙️ FastAPI Backend"]
-        CRUD["Senior CRUD"]
-        CheckinAPI["Check-in Processing"]
-        GraphAPI["Graph Intelligence"]
-        AlertAPI["Alert Engine"]
+    subgraph Inference["LLM Inference"]
+        RocketRide["RocketRide AI\n(.pipe pipelines)"]
+        GMI["GMI Cloud\n(DeepSeek-R1)"]
+        RocketRide -.->|fallback| GMI
     end
 
     Family --> API
-    API --> Neo4j
-    API --> RocketRide
-    CheckinAPI -->|"Store"| CI
+    SeniorPhone <--> BlandAI
+    BlandAI -->|webhook| API
+    API --> CrewAI
+    CrewAI --> Neo4j
+    CrewAI --> Inference
+    CrewAI --> BlandAI
+    Agent1 -->|"initiate call"| VoiceCall
+    Webhook -->|"transcript"| CheckinAPI
+    Agent3 -->|"Cypher queries"| Neo4j
+    Agent4 -->|"prompts"| Inference
+    Agent5 -->|"alerts"| AlertAPI
     GraphAPI -->|"Query"| Neo4j
-    GraphAPI -->|"Reason"| RocketRide
+    GraphAPI -->|"Reason"| Inference
+```
+
+### Data Flow
+
+```mermaid
+sequenceDiagram
+    participant F as Family Dashboard
+    participant A as FastAPI
+    participant C as CrewAI Crew
+    participant B as Bland AI
+    participant S as Senior (Phone)
+    participant N as Neo4j Aura
+    participant L as GMI Cloud LLM
+
+    F->>A: POST /api/crew/checkin/{phone}
+    A->>C: Start Full Check-in Crew
+    C->>N: Look up senior profile
+    N-->>C: Name, medications, contacts
+    C->>B: Initiate voice call
+    B->>S: Automated phone call
+    S-->>B: Conversation (mood, meds, symptoms)
+    B-->>A: Webhook: transcript + recording
+    A->>C: Analysis Agent processes transcript
+    C->>N: Store check-in + symptoms in graph
+    C->>N: Query drug interactions & side effects
+    N-->>C: Graph insights (interactions, matches)
+    C->>L: Generate care recommendations
+    L-->>C: Personalized care plan
+    C->>N: Evaluate & store alerts
+    C-->>A: Complete crew output
+    A-->>F: Results + alerts + care plan
 ```
 
 ## How It Works

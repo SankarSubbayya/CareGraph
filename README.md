@@ -123,6 +123,16 @@ uv run python scripts/seed_data.py
 open http://localhost:8000
 ```
 
+### Neo4j credentials
+
+The backend reads **`NEO4J_URI`**, **`NEO4J_USERNAME`**, **`NEO4J_PASSWORD`**, and optionally **`NEO4J_DATABASE`** from the environment (or from a local `.env` file if you create one). It does not pull secrets from GitHub at runtime.
+
+- **CI:** add the same names as [repository Actions secrets](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions); the [Neo4j smoke workflow](.github/workflows/neo4j-smoke.yml) uses them automatically.
+- **GitHub Codespaces:** add [Codespaces secrets](https://docs.github.com/en/codespaces/managing-your-codespaces/managing-development-environment-secrets-for-your-repository) with the same names so contributors do not need a copied `.env`.
+- **Local machine:** use a gitignored `.env` (see `.env.example`) or export variables in your shell.
+
+Details: [.github/SETUP_SECRETS.md](.github/SETUP_SECRETS.md).
+
 ## Key Demo Scenarios
 
 | Scenario | What Neo4j Does | What RocketRide AI Does |

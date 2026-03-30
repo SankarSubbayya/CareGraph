@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.routers import seniors, checkins, alerts
+from app.routers import seniors, checkins, alerts, voice, crew
 from app.routers.graph import router as graph_router
 from app.graph_db import setup_schema, close_driver
 
@@ -33,6 +33,8 @@ app.include_router(seniors.router)
 app.include_router(checkins.router)
 app.include_router(alerts.router)
 app.include_router(graph_router)
+app.include_router(voice.router)
+app.include_router(crew.router)
 
 app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 

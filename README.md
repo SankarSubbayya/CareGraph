@@ -57,10 +57,37 @@ flowchart TB
 ## How It Works
 
 1. **Add seniors** with their medications, contacts, and check-in schedule
-2. **Simulate check-ins** — enter what the senior said, the system analyzes it
-3. **Neo4j builds the graph** — symptoms, medications, conditions all connected
-4. **RocketRide AI reasons** — drug interactions, side effects, care recommendations
-5. **Graph intelligence** — "Dorothy is dizzy → she takes Lisinopril → dizziness is a side effect of Lisinopril"
+2. **Bland AI calls seniors** — automated voice agent asks about mood, medications, symptoms
+3. **Transcript flows to backend** — Bland AI webhook sends transcript when call ends
+4. **Neo4j builds the graph** — symptoms, medications, conditions all connected
+5. **RocketRide AI / GMI Cloud reasons** — drug interactions, side effects, care recommendations
+6. **Graph intelligence** — "Dorothy is dizzy → she takes Lisinopril → dizziness is a side effect of Lisinopril"
+
+## Voice Agent (Bland AI)
+
+CareGraph uses **Bland AI** to make automated phone calls to seniors for daily check-ins.
+
+### Call Flow
+
+```
+CareGraph triggers call → Bland AI dials senior → AI voice agent converses
+→ Call ends → Webhook sends transcript → NLP analysis → Neo4j graph update → Alerts
+```
+
+### What the Voice Agent Does
+
+- Asks how the senior is feeling (mood, wellness)
+- Asks about medication adherence
+- Listens for symptoms (pain, dizziness, chest pain, etc.)
+- Asks about service needs (meals, transport, companionship)
+- Detects emergencies (falls, breathing difficulty, chest pain)
+- Speaks warmly and patiently — not robotic
+
+### Setup
+
+1. Sign up at [bland.ai](https://www.bland.ai) and get an API key
+2. Set `BLAND_API_KEY` in `.env`
+3. Call `POST /api/voice/call/{phone}` to initiate a check-in call
 
 ## Graph Model
 
@@ -126,9 +153,59 @@ open http://localhost:8000
 - `GET /api/graph/seniors-by-symptom/{symptom}` — Find seniors by symptom
 - `GET /api/graph/seniors-by-medication/{med}` — Find seniors by medication
 
+### CrewAI Multi-Agent Pipeline
+- `POST /api/crew/checkin/{phone}` — Full pipeline: call → analyze → graph → recommend → alert
+- `POST /api/crew/analyze/{phone}` — Analysis pipeline with transcript (no call)
+- `POST /api/crew/insights/{phone}` — Graph insights + recommendations only
+
+### Voice Agent (Bland AI)
+- `POST /api/voice/call/{phone}` — Initiate check-in call to a senior
+- `POST /api/voice/call-all` — Call all registered seniors
+- `GET /api/voice/call/{call_id}` — Get call details + transcript
+- `POST /api/voice/call/{call_id}/analyze` — Run post-call AI analysis
+- `POST /api/voice/call/{call_id}/stop` — Stop an ongoing call
+- `GET /api/voice/calls` — List recent calls
+- `POST /api/voice/webhook` — Webhook endpoint (receives Bland AI call results)
+
 ### Alerts
 - `GET /api/alerts` — Active alerts
 - `PUT /api/alerts/{id}/acknowledge` — Acknowledge
+
+## CrewAI Multi-Agent Architecture
+
+CareGraph uses **CrewAI** to orchestrate 5 specialized AI agents that collaborate on senior care check-ins.
+
+### Agents
+
+| Agent | Role | Tools |
+|-------|------|-------|
+| **Check-in Agent** | Senior Care Caller | Bland AI voice calls, senior lookup |
+| **Analysis Agent** | Health Transcript Analyst | NLP analyzer, graph store |
+| **Graph Agent** | Care Network Analyst | Neo4j drug interactions, side effects, similar symptoms, care network |
+| **Recommendation Agent** | Care Plan Advisor | GMI Cloud LLM for explanations and care plans |
+| **Alert Agent** | Safety Monitor | Alert evaluation engine |
+
+### Crew Pipelines
+
+**Full Check-in** (`POST /api/crew/checkin/{phone}`):
+```
+Check-in Agent → Analysis Agent → Graph Agent → Recommendation Agent → Alert Agent
+  (Bland AI)      (NLP extract)    (Neo4j)       (GMI Cloud LLM)       (Alerts)
+```
+
+**Analysis Only** (`POST /api/crew/analyze/{phone}`):
+```
+Analysis Agent → Graph Agent → Recommendation Agent → Alert Agent
+  (transcript)    (Neo4j)       (GMI Cloud LLM)       (Alerts)
+```
+
+**Graph Insights** (`POST /api/crew/insights/{phone}`):
+```
+Graph Agent → Recommendation Agent
+  (Neo4j)       (GMI Cloud LLM)
+```
+
+---
 
 ## RocketRide AI Pipeline Integration
 
@@ -182,8 +259,10 @@ RocketRide Pipeline (.pipe webhook) → GMI Cloud (api.gmi-serving.com) → empt
 | Tool | Role |
 |------|------|
 | **Neo4j** | Graph database — models care relationships, drug interactions, symptoms |
+| **CrewAI** | Multi-agent orchestration — 5 specialized agents collaborate on check-ins |
+| **Bland AI** | Voice agent — automated phone calls to seniors for check-ins |
 | **RocketRide AI** | Pipeline orchestration — webhook → prompt → Gemini LLM → response |
-| **GMI Cloud** | Direct LLM inference fallback — OpenAI-compatible API at `api.gmi-serving.com` |
+| **GMI Cloud** | LLM inference — powers CrewAI agents and direct API fallback |
 | **FastAPI** | Python backend API |
 | **Chart.js** | Dashboard visualization |
 
@@ -200,14 +279,22 @@ CareGraph/
 ├── app/
 │   ├── config.py              # Settings
 │   ├── graph_db.py            # Neo4j database layer (all Cypher queries)
+│   ├── crew/                  # CrewAI multi-agent system
+│   │   ├── agents.py          # 5 specialized agent definitions
+│   │   ├── tasks.py           # Task definitions for each pipeline
+│   │   ├── tools.py           # Custom tools wrapping CareGraph services
+│   │   └── care_crew.py       # Crew orchestration (3 pipeline configs)
 │   ├── models/
 │   │   └── senior.py          # Pydantic models
 │   ├── routers/
 │   │   ├── seniors.py         # Senior CRUD
 │   │   ├── checkins.py        # Check-in processing
 │   │   ├── alerts.py          # Alert management
-│   │   └── graph.py           # Graph intelligence + RocketRide AI
+│   │   ├── graph.py           # Graph intelligence + RocketRide AI
+│   │   ├── voice.py           # Bland AI voice agent endpoints
+│   │   └── crew.py            # CrewAI multi-agent endpoints
 │   └── services/
+│       ├── bland_voice.py     # Bland AI voice call client
 │       ├── rocketride.py      # RocketRide webhook + GMI Cloud fallback
 │       ├── gmi_inference.py   # GMI Cloud direct inference client
 │       ├── call_analyzer.py   # Transcript NLP (local fallback)

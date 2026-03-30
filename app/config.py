@@ -5,11 +5,14 @@ class Settings(BaseSettings):
     # Neo4j
     neo4j_uri: str = "bolt://localhost:7687"
     neo4j_user: str = "neo4j"
-    neo4j_password: str = "careGraph2026"
+    neo4j_password: str = ""
 
     # RocketRide AI
     rocketride_uri: str = "http://localhost:5565"
     rocketride_apikey: str = ""
+
+    # Bland AI Voice Agent
+    bland_api_key: str = ""
 
     # GMI Cloud Inference
     gmi_base_url: str = "https://api.gmi-serving.com/v1"

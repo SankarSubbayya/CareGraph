@@ -11,6 +11,7 @@ dependencies = [
     "pydantic-settings",
     "neo4j",
     "apscheduler>=3.10,<4",
+    "crewai>=1.12.2",
 ]
 
 [project.optional-dependencies]

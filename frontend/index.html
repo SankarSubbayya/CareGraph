@@ -35,12 +35,13 @@
             <div class="stats-row">
                 <div class="stat-card"><div class="stat-label">Total seniors</div><div class="stat-value" id="stat-total">0</div></div>
                 <div class="stat-card"><div class="stat-label">Active alerts</div><div class="stat-value stat-orange" id="stat-alerts">0</div></div>
+                <div class="stat-card"><div class="stat-label">Needs outreach</div><div class="stat-value stat-orange" id="stat-at-risk" title="No check-in within 7 days">0</div></div>
                 <div class="stat-card"><div class="stat-label">Avg. wellness</div><div class="stat-value" id="stat-avg">—/10</div></div>
                 <div class="stat-card"><div class="stat-label">Graph nodes</div><div class="stat-value stat-green" id="stat-nodes">—</div></div>
             </div>
             <div class="table-container">
-                <table class="data-table"><thead><tr><th>NAME</th><th>STATUS</th><th>SCORE</th><th>MEDICATIONS</th><th>ACTIONS</th></tr></thead>
-                <tbody id="seniors-tbody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody></table>
+                <table class="data-table"><thead><tr><th>NAME</th><th>STATUS</th><th>SCORE</th><th>CHECK-IN</th><th>FAMILY</th><th>MEDICATIONS</th><th>ACTIONS</th></tr></thead>
+                <tbody id="seniors-tbody"><tr><td colspan="7" class="empty-state">Loading...</td></tr></tbody></table>
             </div>
         </div>
 
@@ -142,6 +143,12 @@
         <!-- Page: Alerts -->
         <div id="page-alerts" class="page">
             <div class="page-header"><h1>Alerts</h1></div>
+            <div class="graph-controls" style="margin-bottom:1rem;">
+                <label style="display:flex;align-items:center;gap:0.5rem;cursor:pointer;">
+                    <input type="checkbox" id="alerts-show-history" onchange="loadAlertsPage()">
+                    Show acknowledged history
+                </label>
+            </div>
             <div id="alerts-full-list"></div>
         </div>
 
@@ -163,6 +170,21 @@
                 <p id="demo-step-desc"></p>
                 <div class="demo-progress-bar"><div id="demo-bar" class="demo-bar-fill"></div></div>
                 <button class="btn" onclick="stopDemo()" style="margin-top:1rem;">Stop Demo</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contact Details Modal -->
+    <div id="contact-modal" class="modal" style="display:none;" onclick="if(event.target===this)closeContactModal()">
+        <div class="modal-content" style="max-width:360px;">
+            <h2 style="margin-bottom:0.25rem;">Family Contact</h2>
+            <p style="margin:0 0 1.25rem;font-size:0.85rem;color:var(--gray-500);">Contact for <span id="contact-modal-senior-name"></span></p>
+            <div class="contact-detail-row"><span class="contact-detail-label">Name</span><span id="contact-modal-name" class="contact-detail-value"></span></div>
+            <div class="contact-detail-row"><span class="contact-detail-label">Phone</span><span id="contact-modal-phone" class="contact-detail-value"></span></div>
+            <div class="contact-detail-row"><span class="contact-detail-label">Relation</span><span id="contact-modal-relation" class="contact-detail-value"></span></div>
+            <div class="modal-actions" style="margin-top:1.5rem;">
+                <button type="button" class="btn" onclick="closeContactModal()">Close</button>
+                <a id="contact-modal-call" href="#" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:0.4rem;text-decoration:none;">📞 Call</a>
             </div>
         </div>
     </div>

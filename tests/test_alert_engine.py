@@ -47,6 +47,19 @@ def test_chest_pain_triggers_critical():
     assert any(a["severity"] == "critical" for a in alerts)
 
 
+def test_confusion_phrase_triggers_critical():
+    checkin = {
+        "senior_phone": "+14155551001",
+        "mood": "concerning",
+        "wellness_score": 4,
+        "medication_taken": True,
+        "concerns": ["Mom seems confused and disoriented this morning"],
+        "service_requests": [],
+    }
+    alerts = evaluate_checkin(checkin, "Margaret Johnson")
+    assert any(a["alert_type"] == "emergency" and a["severity"] == "critical" for a in alerts)
+
+
 # ---------------------------------------------------------------------------
 # Low mood / wellness alerts
 # ---------------------------------------------------------------------------

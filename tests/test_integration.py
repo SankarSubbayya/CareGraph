@@ -17,6 +17,7 @@ from app.graph_db import (
     get_care_network,
     get_checkins,
     get_alerts,
+    get_senior_checkin_wellness,
 )
 
 client = TestClient(app)
@@ -76,6 +77,14 @@ class TestGraphDB:
         alerts = get_alerts()
         assert len(alerts) >= 1
 
+    def test_senior_checkin_wellness_shape(self):
+        rows = get_senior_checkin_wellness(days_threshold=7)
+        assert len(rows) >= 3
+        for r in rows:
+            assert "phone" in r and "name" in r
+            assert "at_risk" in r and isinstance(r["at_risk"], bool)
+            assert r.get("days_threshold") == 7
+
 
 # ---------------------------------------------------------------------------
 # API endpoint tests
@@ -117,6 +126,15 @@ class TestAPI:
     def test_alerts_endpoint(self):
         resp = client.get("/api/alerts")
         assert resp.status_code == 200
+
+    def test_wellness_overview_endpoint(self):
+        resp = client.get("/api/seniors/wellness-overview?days_threshold=7")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "at_risk_count" in data and "seniors" in data
+        assert isinstance(data["seniors"], list)
+        assert len(data["seniors"]) >= 3
+        assert data["days_threshold"] == 7
 
     def test_drug_interactions_endpoint(self):
         resp = client.get("/api/graph/drug-interactions/+14155551001")

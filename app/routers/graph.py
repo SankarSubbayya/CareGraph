@@ -54,7 +54,7 @@ async def drug_interactions(phone: str):
         explanation = await explain_drug_interaction(
             interaction["drug1"], interaction["drug2"]
         )
-        interaction["ai_explanation"] = explanation
+        interaction["ai_explanation"] = explanation or "No AI explanation available."
     return {"phone": phone, "interactions": interactions}
 
 

@@ -20,6 +20,9 @@ function showPage(id) {
     if (id === 'voice') loadRecentCalls();
 }
 
+// ── Contact lookup map (keyed by senior phone) ──
+const _contactMap = {};
+
 // ── Seniors ──
 async function loadSeniors() {
     try {
@@ -30,27 +33,57 @@ async function loadSeniors() {
         latest.forEach(c => { latestMap[c.senior_phone] = c; });
         const alerts = await fetchJSON('/api/alerts');
 
+        let wellnessMap = {};
+        try {
+            const w = await fetchJSON('/api/seniors/wellness-overview?days_threshold=7');
+            document.getElementById('stat-at-risk').textContent = w.at_risk_count ?? '—';
+            (w.seniors || []).forEach(x => { wellnessMap[x.phone] = x; });
+        } catch (e) {
+            document.getElementById('stat-at-risk').textContent = '—';
+        }
+
         document.getElementById('stat-total').textContent = seniors.length;
         document.getElementById('stat-alerts').textContent = alerts.length;
         const scores = latest.filter(c => c.wellness_score > 0).map(c => c.wellness_score);
         document.getElementById('stat-avg').textContent = scores.length ? (scores.reduce((a,b)=>a+b,0)/scores.length).toFixed(1)+'/10' : '—';
 
         const tbody = document.getElementById('seniors-tbody');
-        if (!seniors.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No seniors. Click "+ Add Senior".</td></tr>'; return; }
+        if (!seniors.length) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No seniors. Click "+ Add Senior".</td></tr>'; return; }
         tbody.innerHTML = seniors.map(s => {
             const l = latestMap[s.phone];
             const mood = l?.mood || 'unknown';
             let sc = mood === 'concerning' ? 'danger' : mood === 'sad' ? 'warning' : l ? 'good' : 'neutral';
             let st = mood === 'concerning' ? 'Concerning' : mood === 'sad' ? 'Needs attention' : l ? 'OK' : 'Pending';
+            const w = wellnessMap[s.phone];
+            if (w && w.at_risk) { sc = 'warning'; st = 'Needs outreach'; }
             const score = l?.wellness_score || '—';
+            let checkinHtml = '—';
+            if (w) {
+                if (w.last_checkin_timestamp == null) {
+                    checkinHtml = '<span class="status-badge danger"><span class="dot"></span> None yet</span>';
+                } else if (w.at_risk) {
+                    checkinHtml = `<span class="status-badge warning" title="No check-in in ${w.days_threshold} days"><span class="dot"></span> ${w.days_since_checkin}d</span>`;
+                } else {
+                    checkinHtml = `<span style="font-size:0.85rem;color:var(--gray-600)">${w.days_since_checkin}d ago</span>`;
+                }
+            }
+            const fc = (s.emergency_contacts && s.emergency_contacts[0]) ? s.emergency_contacts[0] : null;
+            if (fc) _contactMap[s.phone] = { ...fc, seniorName: s.name };
+            const safeKey = s.phone.replace(/'/g, "\\'");
+            const safeName = s.name.replace(/'/g, "\\'").replace(/\\/g, '\\\\');
+            const contactHtml = (fc && fc.phone)
+                ? `<button class="btn-contact-link" onclick="showContactDetails('${safeKey}')">${(fc.name || 'Family contact').replace(/</g, '&lt;')}</button>`
+                : '<span style="color:var(--gray-400);font-size:0.85rem;">—</span>';
             return `<tr>
                 <td><div class="name-cell"><div class="avatar ${getColor(s.name)}">${getInitials(s.name)}</div><div class="name-info"><div class="name">${s.name}</div><div class="phone">${s.phone}</div></div></div></td>
                 <td><span class="status-badge ${sc}"><span class="dot"></span> ${st}</span></td>
                 <td>${score === '—' ? '—' : score+'/10'}</td>
-                <td style="max-width:200px;font-size:0.85rem;">${s.medications.join(', ') || '—'}</td>
-                <td><button class="btn btn-small" onclick="showPage('graph');document.getElementById('graph-senior-select').value='${s.phone}';loadGraph()">Graph</button>
-                    <button class="btn btn-small" onclick="showPage('insights');document.getElementById('insight-senior-select').value='${s.phone}'">Insights</button>
-                    <button class="btn btn-small" onclick="showPage('voice');document.getElementById('voice-senior-select').value='${s.phone}'">Call</button></td>
+                <td style="white-space:nowrap;">${checkinHtml}</td>
+                <td>${contactHtml}</td>
+                <td style="max-width:180px;font-size:0.85rem;">${s.medications.join(', ') || '—'}</td>
+                <td><button class="btn btn-small" onclick="goToPage('graph', '${safeKey}')">Graph</button>
+                    <button class="btn btn-small" onclick="goToPage('insights', '${safeKey}')">Insights</button>
+                    <button class="btn btn-small" onclick="goToPage('voice', '${safeKey}')">Call</button></td>
             </tr>`;
         }).join('');
 
@@ -63,7 +96,44 @@ async function loadSeniors() {
                 `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;"><span class="severity ${a.severity}">${a.severity}</span><span>${a.message}</span></div>`
             ).join('');
         } else { banner.style.display = 'none'; badge.style.display = 'none'; }
-    } catch(e) { console.error(e); document.getElementById('seniors-tbody').innerHTML = '<tr><td colspan="5" class="empty-state">Failed to load. Is the server running?</td></tr>'; }
+    } catch(e) { console.error(e); document.getElementById('seniors-tbody').innerHTML = '<tr><td colspan="7" class="empty-state">Failed to load. Is the server running?</td></tr>'; }
+}
+
+// ── Contact Details Modal ──
+function showContactDetails(seniorPhone) {
+    const fc = _contactMap[seniorPhone] || {};
+    const seniorNameEl = document.getElementById('contact-modal-senior-name');
+    if (seniorNameEl) seniorNameEl.textContent = fc.seniorName || 'this senior';
+    document.getElementById('contact-modal-name').textContent = fc.name || 'Family Contact';
+    document.getElementById('contact-modal-phone').textContent = fc.phone || '—';
+    document.getElementById('contact-modal-relation').textContent = fc.relation || fc.relationship || '—';
+    const callBtn = document.getElementById('contact-modal-call');
+    callBtn.href = fc.phone ? `tel:${String(fc.phone).replace(/\s/g, '')}` : '#';
+    callBtn.style.display = fc.phone ? 'inline-flex' : 'none';
+    document.getElementById('contact-modal').style.display = 'flex';
+}
+function closeContactModal() { document.getElementById('contact-modal').style.display = 'none'; }
+
+// ── Navigate to page and pre-select a senior ──
+async function goToPage(page, phone) {
+    showPage(page);
+    const selectMap = {
+        graph: 'graph-senior-select',
+        insights: 'insight-senior-select',
+        voice: 'voice-senior-select',
+    };
+    const selId = selectMap[page];
+    if (!selId) return;
+    // Populate options fresh and set value — avoids async race in showPage
+    try {
+        const seniors = await fetchJSON('/api/seniors');
+        const sel = document.getElementById(selId);
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Select a senior...</option>' +
+            seniors.map(s => `<option value="${s.phone}">${s.name}</option>`).join('');
+        sel.value = phone;
+    } catch(e) {}
+    if (page === 'graph') loadGraph();
 }
 
 // ── Interactive Graph View (vis.js) ──
@@ -318,10 +388,13 @@ async function addSenior(e) {
 // ── Alerts Page ──
 async function loadAlertsPage() {
     try {
-        const alerts = await fetchJSON('/api/alerts?acknowledged=true');
+        const history = document.getElementById('alerts-show-history')?.checked;
+        const url = history ? '/api/alerts?acknowledged=true' : '/api/alerts';
+        const alerts = await fetchJSON(url);
         const el = document.getElementById('alerts-full-list');
-        if (!alerts.length) { el.innerHTML = '<p class="empty-state">No alerts.</p>'; return; }
-        el.innerHTML = alerts.map(a => `<div class="alert-card ${a.severity}"><div style="flex:1;"><span class="severity ${a.severity}">${a.severity}</span> <strong>${a.alert_type.replace(/_/g,' ')}</strong><div style="margin-top:0.25rem;">${a.message}</div><div style="font-size:0.75rem;color:var(--gray-500);margin-top:0.25rem;">${new Date(a.timestamp).toLocaleString()}</div></div>${!a.acknowledged ? `<button class="btn btn-small" onclick="ackAlert('${a.id}')">Acknowledge</button>` : ''}</div>`).join('');
+        const hint = history ? '' : '<p style="color:var(--gray-600);font-size:0.9rem;margin-bottom:1rem;">Showing active alerts only. Enable <strong>Show acknowledged history</strong> to see past items.</p>';
+        if (!alerts.length) { el.innerHTML = hint + '<p class="empty-state">No alerts.</p>'; return; }
+        el.innerHTML = hint + alerts.map(a => `<div class="alert-card ${a.severity}"><div style="flex:1;"><span class="severity ${a.severity}">${a.severity}</span> <strong>${a.alert_type.replace(/_/g,' ')}</strong>${a.acknowledged ? ' <span style="font-size:0.75rem;color:var(--gray-500);">(acknowledged)</span>' : ''}<div style="margin-top:0.25rem;">${a.message}</div><div style="font-size:0.75rem;color:var(--gray-500);margin-top:0.25rem;">${new Date(a.timestamp).toLocaleString()}</div></div>${!a.acknowledged ? `<button class="btn btn-small" onclick="ackAlert(${JSON.stringify(a.id)})">Acknowledge</button>` : ''}</div>`).join('');
     } catch(e) { console.error(e); }
 }
 async function ackAlert(id) { await fetchJSON(`/api/alerts/${encodeURIComponent(id)}/acknowledge`, { method: 'PUT' }); loadAlertsPage(); loadSeniors(); }

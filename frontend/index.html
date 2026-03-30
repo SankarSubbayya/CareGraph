@@ -39,8 +39,8 @@
                 <div class="stat-card"><div class="stat-label">Graph nodes</div><div class="stat-value stat-green" id="stat-nodes">—</div></div>
             </div>
             <div class="table-container">
-                <table class="data-table"><thead><tr><th>NAME</th><th>STATUS</th><th>SCORE</th><th>MEDICATIONS</th><th>ACTIONS</th></tr></thead>
-                <tbody id="seniors-tbody"><tr><td colspan="5" class="empty-state">Loading...</td></tr></tbody></table>
+                <table class="data-table"><thead><tr><th>NAME</th><th>STATUS</th><th>SCORE</th><th>FAMILY</th><th>MEDICATIONS</th><th>ACTIONS</th></tr></thead>
+                <tbody id="seniors-tbody"><tr><td colspan="6" class="empty-state">Loading...</td></tr></tbody></table>
             </div>
         </div>
 
@@ -182,6 +182,23 @@
                     <button type="submit" class="btn btn-primary">Add</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Contact Details Modal -->
+    <div id="contact-modal" class="modal" style="display:none;" onclick="if(event.target===this)closeContactModal()">
+        <div class="modal-content" style="max-width:400px;">
+            <h2>Family Contact</h2>
+            <p style="color:var(--gray-500);font-size:0.9rem;margin-top:-0.5rem;margin-bottom:1rem;">Contact for <strong id="contact-modal-senior-name"></strong></p>
+            <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                <div><span style="font-size:0.8rem;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.05em;">Name</span><div id="contact-modal-name" style="font-weight:600;font-size:1rem;margin-top:0.2rem;"></div></div>
+                <div><span style="font-size:0.8rem;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.05em;">Phone</span><div id="contact-modal-phone" style="font-size:1rem;margin-top:0.2rem;"></div></div>
+                <div><span style="font-size:0.8rem;color:var(--gray-500);text-transform:uppercase;letter-spacing:0.05em;">Relationship</span><div id="contact-modal-relation" style="font-size:1rem;margin-top:0.2rem;"></div></div>
+            </div>
+            <div class="modal-actions" style="margin-top:1.5rem;">
+                <button class="btn" onclick="closeContactModal()">Close</button>
+                <a id="contact-modal-call" class="btn btn-primary" style="display:none;text-decoration:none;align-items:center;gap:0.4rem;">📞 Call</a>
+            </div>
         </div>
     </div>
 

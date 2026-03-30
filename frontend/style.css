@@ -31,6 +31,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .btn-primary { background: var(--primary); color: white; border-color: var(--primary); }
 .btn-primary:hover { opacity: 0.9; }
 .btn-small { padding: 0.3rem 0.6rem; font-size: 0.8rem; }
+.btn-contact-link { background: none; border: none; padding: 0; color: var(--primary); font-size: 0.9rem; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.btn-contact-link:hover { color: var(--primary-dark, #1d4ed8); }
 
 .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
 .stat-card { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 1rem 1.25rem; }

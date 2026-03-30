@@ -17,9 +17,18 @@ def evaluate_checkin(checkin: dict, senior_name: str = "") -> list[dict]:
     who = senior_name or checkin.get("senior_phone", "")
     phone = checkin.get("senior_phone", "")
 
-    emergency_words = {"fall", "fell", "fallen", "chest pain", "can't breathe", "emergency", "stroke", "bleeding"}
+    # Substring match: concerns are free text from NLP; match elder-relevant crises.
+    emergency_phrases = (
+        "fall", "fell", "fallen", "on the floor", "can't get up", "help me up",
+        "chest pain", "heart attack", "can't breathe", "breathless", "choking",
+        "stroke", "bleeding", "blood", "unconscious", "passed out",
+        "emergency", "call 911", "ambulance",
+        "confusion", "confused", "disoriented", "slurred", "slurring",
+        "weakness on one side", "face drooping", "severe headache", "sudden numbness",
+    )
     for concern in checkin.get("concerns", []):
-        if concern.lower() in emergency_words:
+        cl = concern.lower()
+        if any(p in cl for p in emergency_phrases):
             alert = {"id": f"{phone}:{now}:emergency", "senior_phone": phone, "senior_name": senior_name,
                      "timestamp": now, "alert_type": "emergency", "severity": "critical",
                      "message": f"Emergency: {concern}. Immediate attention needed for {who}."}

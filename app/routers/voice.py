@@ -12,7 +12,12 @@ from app.services.bland_voice import (
     stop_call,
     list_calls,
 )
-from app.services.call_analyzer import analyze_transcript
+from app.services.rocketride import (
+    analyze_checkin_transcript,
+    local_analyzer_to_normalized,
+    merged_concerns_for_storage,
+    service_requests_for_storage,
+)
 from app.services.alert_engine import evaluate_checkin
 from app.config import settings
 
@@ -150,8 +155,15 @@ async def bland_webhook(request: Request):
     if not senior:
         return {"status": "skipped", "reason": f"senior not found for {phone}"}
 
-    # Process transcript through analysis pipeline
-    analysis = analyze_transcript(transcript)
+    # Process transcript through analysis pipeline (RocketRide/GMI first, local NLP fallback)
+    analysis = await analyze_checkin_transcript(
+        transcript, senior["name"], senior.get("medications", [])
+    )
+    if not analysis:
+        analysis = local_analyzer_to_normalized(transcript)
+
+    concerns_store = merged_concerns_for_storage(analysis)
+    svc_store = service_requests_for_storage(analysis)
     now = datetime.now(timezone.utc).isoformat()
 
     checkin_key = store_checkin(
@@ -162,8 +174,8 @@ async def bland_webhook(request: Request):
         mood=analysis["mood"],
         wellness_score=analysis["wellness_score"],
         medication_taken=analysis["medication_taken"],
-        concerns=analysis["concerns"],
-        service_requests=analysis["service_requests"],
+        concerns=concerns_store,
+        service_requests=svc_store,
         summary=analysis["summary"],
     )
 
@@ -173,8 +185,8 @@ async def bland_webhook(request: Request):
         "mood": analysis["mood"],
         "wellness_score": analysis["wellness_score"],
         "medication_taken": analysis["medication_taken"],
-        "concerns": analysis["concerns"],
-        "service_requests": analysis["service_requests"],
+        "concerns": concerns_store,
+        "service_requests": svc_store,
     }
     alerts = evaluate_checkin(checkin_data, senior["name"])
 

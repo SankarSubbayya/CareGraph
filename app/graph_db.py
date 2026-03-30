@@ -17,6 +17,7 @@ Graph model:
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from neo4j import GraphDatabase
@@ -290,6 +291,65 @@ def get_latest_checkins() -> list[dict]:
                latest.timestamp AS timestamp, latest.summary AS summary
     """)
     return [dict(r) for r in results]
+
+
+def _parse_graph_datetime(value) -> datetime | None:
+    """Normalize Neo4j / Python datetime or ISO string to a timezone-aware UTC datetime."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if hasattr(value, "to_native"):
+        try:
+            native = value.to_native()
+            if isinstance(native, datetime):
+                return native if native.tzinfo else native.replace(tzinfo=timezone.utc)
+        except Exception:
+            pass
+    s = str(value).strip()
+    if not s:
+        return None
+    try:
+        if s.endswith("Z"):
+            s = s[:-1] + "+00:00"
+        dt = datetime.fromisoformat(s)
+        return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def get_senior_checkin_wellness(days_threshold: int = 7) -> list[dict]:
+    """Per senior: last check-in time, days since, and at_risk if no check-in within threshold days."""
+    results = run_query("""
+        MATCH (s:Senior)
+        OPTIONAL MATCH (s)-[:CHECKED_IN]->(ci:CheckIn)
+        WITH s, max(ci.timestamp) AS last_ts
+        RETURN s.phone AS phone, s.name AS name, s.checkin_schedule AS checkin_schedule,
+               last_ts AS last_checkin_timestamp
+        ORDER BY name
+    """)
+    now = datetime.now(timezone.utc)
+    out: list[dict] = []
+    for r in results:
+        last_raw = r.get("last_checkin_timestamp")
+        last_dt = _parse_graph_datetime(last_raw)
+        if last_dt is None:
+            days_since = None
+            at_risk = True
+        else:
+            delta = now - last_dt
+            days_since = max(0, int(delta.total_seconds() // 86400))
+            at_risk = days_since >= days_threshold
+        out.append({
+            "phone": r["phone"],
+            "name": r["name"],
+            "checkin_schedule": r.get("checkin_schedule") or "09:00",
+            "last_checkin_timestamp": last_dt.isoformat() if last_dt else None,
+            "days_since_checkin": days_since,
+            "at_risk": at_risk,
+            "days_threshold": days_threshold,
+        })
+    return out
 
 
 # ── Alerts ──

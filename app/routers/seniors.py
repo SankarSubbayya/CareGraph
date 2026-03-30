@@ -3,7 +3,13 @@
 from fastapi import APIRouter, HTTPException
 
 from app.models.senior import Senior
-from app.graph_db import create_senior, get_senior, list_seniors, delete_senior
+from app.graph_db import (
+    create_senior,
+    get_senior,
+    list_seniors,
+    delete_senior,
+    get_senior_checkin_wellness,
+)
 
 router = APIRouter(prefix="/api/seniors", tags=["seniors"])
 
@@ -21,6 +27,16 @@ async def add_senior(senior: Senior):
 @router.get("")
 async def get_all_seniors():
     return list_seniors()
+
+
+@router.get("/wellness-overview")
+async def wellness_overview(days_threshold: int = 7):
+    """Check-in cadence per senior: who may need outreach (no recent check-in)."""
+    if days_threshold < 1 or days_threshold > 90:
+        raise HTTPException(status_code=400, detail="days_threshold must be between 1 and 90")
+    rows = get_senior_checkin_wellness(days_threshold=days_threshold)
+    at_risk_count = sum(1 for r in rows if r["at_risk"])
+    return {"days_threshold": days_threshold, "at_risk_count": at_risk_count, "seniors": rows}
 
 
 @router.get("/{phone}")

@@ -12,6 +12,9 @@ def test_default_settings(monkeypatch):
     s = Settings(neo4j_password="test", _env_file=None)
     assert s.neo4j_user == "neo4j"
     assert s.rocketride_uri == "http://localhost:5565"
+    assert s.rocketride_apikey == ""
+    assert s.rocketride_checkin_webhook_url == ""
+    assert s.rocketride_drug_interaction_webhook_url == ""
     assert s.gmi_base_url == "https://api.gmi-serving.com/v1"
     assert s.gmi_model == "deepseek-ai/DeepSeek-R1"
     assert s.skip_auth is True

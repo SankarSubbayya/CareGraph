@@ -1,0 +1,137 @@
+{
+  "viewport": {
+    "x": -800,
+    "y": 200,
+    "zoom": 1.2
+  },
+  "name": "CareGraph Check-in Analysis",
+  "description": "Analyzes senior care check-in transcripts to extract symptoms, mood, and urgency",
+  "components": [
+    {
+      "id": "webhook_1",
+      "provider": "webhook",
+      "config": {
+        "hideForm": true,
+        "mode": "Source",
+        "parameters": {},
+        "type": "webhook"
+      },
+      "ui": {
+        "position": {
+          "x": 940,
+          "y": 40
+        },
+        "measured": {
+          "width": 160,
+          "height": 134
+        },
+        "data": {
+          "provider": "webhook",
+          "class": "source",
+          "type": "default"
+        },
+        "formDataValid": true
+      }
+    },
+    {
+      "id": "llm_gemini_1",
+      "provider": "llm_gemini",
+      "name": "gemini",
+      "config": {
+        "profile": "gemini-2_5-flash",
+        "gemini-2_5-flash": {
+          "apikey": ""
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 1520,
+          "y": 40
+        },
+        "measured": {
+          "width": 160,
+          "height": 64
+        },
+        "data": {
+          "provider": "llm_gemini",
+          "class": "llm",
+          "type": "default"
+        },
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "questions",
+          "from": "prompt_1"
+        }
+      ]
+    },
+    {
+      "id": "prompt_1",
+      "provider": "prompt",
+      "name": "Check-in Analyzer",
+      "description": "You are a senior care AI assistant for CareGraph. Analyze the check-in transcript and extract health information.\n\nReturn a JSON object with:\n- mood: happy|neutral|sad|concerning\n- wellness_score: 1-10\n- medication_taken: true|false|null\n- symptoms: [list of symptoms mentioned]\n- concerns: [list of health concerns]\n- service_needs: [list of services needed like meals, transport, companionship]\n- summary: one sentence summary\n- recommendation: what the family should do next\n",
+      "config": {
+        "instructions": [
+          "You are a senior care AI assistant. Analyze check-in transcripts to extract symptoms, mood, wellness, and service needs. Return structured JSON.",
+          "Analyze this senior care check-in transcript and return JSON results:\n\n{{text}}"
+        ],
+        "parameters": {
+          "google": {}
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 1240,
+          "y": 80
+        },
+        "measured": {
+          "width": 160,
+          "height": 117
+        },
+        "data": {
+          "provider": "prompt",
+          "class": "text",
+          "type": "default"
+        },
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "text",
+          "from": "webhook_1"
+        }
+      ]
+    },
+    {
+      "id": "response_answers_1",
+      "provider": "response_answers",
+      "config": {
+        "laneName": "answers"
+      },
+      "ui": {
+        "position": {
+          "x": 1800,
+          "y": -40
+        },
+        "measured": {
+          "width": 160,
+          "height": 64
+        },
+        "data": {
+          "provider": "response_answers",
+          "class": "infrastructure",
+          "type": "default"
+        },
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "answers",
+          "from": "llm_gemini_1"
+        }
+      ]
+    }
+  ],
+  "project_id": ""
+}

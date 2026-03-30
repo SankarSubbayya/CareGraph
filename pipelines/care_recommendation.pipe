@@ -1,0 +1,137 @@
+{
+  "viewport": {
+    "x": -800,
+    "y": 200,
+    "zoom": 1.2
+  },
+  "name": "CareGraph Care Plan Generator",
+  "description": "Generates personalized care recommendations from Neo4j graph data for senior patients",
+  "components": [
+    {
+      "id": "webhook_1",
+      "provider": "webhook",
+      "config": {
+        "hideForm": true,
+        "mode": "Source",
+        "parameters": {},
+        "type": "webhook"
+      },
+      "ui": {
+        "position": {
+          "x": 940,
+          "y": 40
+        },
+        "measured": {
+          "width": 160,
+          "height": 134
+        },
+        "data": {
+          "provider": "webhook",
+          "class": "source",
+          "type": "default"
+        },
+        "formDataValid": true
+      }
+    },
+    {
+      "id": "llm_gemini_1",
+      "provider": "llm_gemini",
+      "name": "gemini",
+      "config": {
+        "profile": "gemini-2_5-flash",
+        "gemini-2_5-flash": {
+          "apikey": ""
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 1520,
+          "y": 40
+        },
+        "measured": {
+          "width": 160,
+          "height": 64
+        },
+        "data": {
+          "provider": "llm_gemini",
+          "class": "llm",
+          "type": "default"
+        },
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "questions",
+          "from": "prompt_1"
+        }
+      ]
+    },
+    {
+      "id": "prompt_1",
+      "provider": "prompt",
+      "name": "Care Plan Generator",
+      "description": "You are a healthcare AI assistant for CareGraph, a senior care platform. Generate personalized care recommendations based on the patient's graph data.\n\nUsing the senior's medications, symptoms, conditions, check-in history, and graph relationships, provide:\n1. Top 3 actionable recommendations for the family\n2. Any concerns to discuss with their doctor\n3. Suggested schedule adjustments\n\nBe concise and practical. Write for a family caregiver, not a medical professional.\n",
+      "config": {
+        "instructions": [
+          "You are a senior care AI assistant. Generate personalized care plans based on graph data including medications, symptoms, conditions, check-in history, drug interactions, and side effect matches. Be concise and write for family caregivers.",
+          "Generate a care recommendation for this senior based on their care graph data:\n\n{{text}}"
+        ],
+        "parameters": {
+          "google": {}
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 1240,
+          "y": 80
+        },
+        "measured": {
+          "width": 160,
+          "height": 117
+        },
+        "data": {
+          "provider": "prompt",
+          "class": "text",
+          "type": "default"
+        },
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "text",
+          "from": "webhook_1"
+        }
+      ]
+    },
+    {
+      "id": "response_answers_1",
+      "provider": "response_answers",
+      "config": {
+        "laneName": "answers"
+      },
+      "ui": {
+        "position": {
+          "x": 1800,
+          "y": -40
+        },
+        "measured": {
+          "width": 160,
+          "height": 64
+        },
+        "data": {
+          "provider": "response_answers",
+          "class": "infrastructure",
+          "type": "default"
+        },
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "answers",
+          "from": "llm_gemini_1"
+        }
+      ]
+    }
+  ],
+  "project_id": ""
+}

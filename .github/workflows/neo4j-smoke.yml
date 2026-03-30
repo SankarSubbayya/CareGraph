@@ -1,0 +1,45 @@
+# Injects Neo4j credentials from repository Actions secrets (no .env file in CI).
+# Add secrets under Settings → Secrets and variables → Actions — see .github/SETUP_SECRETS.md
+name: Neo4j smoke test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  neo4j-smoke:
+    runs-on: ubuntu-latest
+    # Repository secrets → process environment (same names the app reads in app/config.py)
+    env:
+      NEO4J_URI: ${{ secrets.NEO4J_URI }}
+      NEO4J_USERNAME: ${{ secrets.NEO4J_USERNAME }}
+      NEO4J_PASSWORD: ${{ secrets.NEO4J_PASSWORD }}
+      NEO4J_DATABASE: ${{ secrets.NEO4J_DATABASE }}
+      AURA_INSTANCEID: ${{ secrets.AURA_INSTANCEID }}
+      AURA_INSTANCENAME: ${{ secrets.AURA_INSTANCENAME }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+
+      - name: Install dependencies
+        run: uv sync --frozen
+
+      - name: Verify Neo4j connectivity
+        run: |
+          if [ -z "${NEO4J_URI:-}" ] || [ -z "${NEO4J_PASSWORD:-}" ]; then
+            echo "::notice title=Neo4j::Skipped — add Actions secrets NEO4J_URI and NEO4J_PASSWORD (see .github/SETUP_SECRETS.md)."
+            exit 0
+          fi
+          uv run python -c "
+          from app.graph_db import run_query, close_driver
+          try:
+              r = run_query('RETURN 1 AS n')
+              assert r[0]['n'] == 1
+          finally:
+              close_driver()
+          "
+          echo "Neo4j connectivity OK"

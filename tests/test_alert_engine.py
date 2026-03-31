@@ -47,6 +47,22 @@ def test_chest_pain_triggers_critical():
     assert any(a["severity"] == "critical" for a in alerts)
 
 
+def test_duplicate_emergency_concerns_yield_one_critical_alert():
+    """Same concern repeated (or duplicate strings) must not create duplicate emergency rows."""
+    checkin = {
+        "senior_phone": "+14155551001",
+        "mood": "concerning",
+        "wellness_score": 2,
+        "medication_taken": False,
+        "concerns": ["fell", "fell", "pain"],
+        "service_requests": [],
+    }
+    alerts = evaluate_checkin(checkin, "Margaret Johnson")
+    emergency = [a for a in alerts if a["alert_type"] == "emergency"]
+    assert len(emergency) == 1
+    assert "fell" in emergency[0]["message"].lower()
+
+
 # ---------------------------------------------------------------------------
 # Low mood / wellness alerts
 # ---------------------------------------------------------------------------

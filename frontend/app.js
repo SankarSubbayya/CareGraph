@@ -8,6 +8,18 @@ async function fetchJSON(url, opts = {}) {
 function getInitials(name) { return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2); }
 function getColor(name) { let h = 0; for (const c of name) h = ((h << 5) - h) + c.charCodeAt(0); return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]; }
 
+const _ALERT_SEVERITY_RANK = { critical: 0, high: 1, medium: 2, low: 3 };
+function sortAlertsBySeverity(alerts) {
+    return [...alerts].sort((a, b) => {
+        const ra = _ALERT_SEVERITY_RANK[(a.severity || '').toLowerCase()] ?? 99;
+        const rb = _ALERT_SEVERITY_RANK[(b.severity || '').toLowerCase()] ?? 99;
+        if (ra !== rb) return ra - rb;
+        const tb = new Date(b.timestamp || 0).getTime();
+        const ta = new Date(a.timestamp || 0).getTime();
+        return tb - ta;
+    });
+}
+
 // ── Page Navigation ──
 function showPage(id) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -69,7 +81,7 @@ async function loadSeniors() {
         const badge = document.getElementById('alert-badge');
         if (alerts.length) {
             banner.style.display = 'block'; badge.style.display = 'inline'; badge.textContent = alerts.length;
-            document.getElementById('alerts-banner-content').innerHTML = alerts.slice(0,3).map(a =>
+            document.getElementById('alerts-banner-content').innerHTML = sortAlertsBySeverity(alerts).slice(0, 3).map(a =>
                 `<div style="display:flex;align-items:center;gap:0.5rem;padding:0.3rem 0;"><span class="severity ${a.severity}">${a.severity}</span><span>${a.message}</span></div>`
             ).join('');
         } else { banner.style.display = 'none'; badge.style.display = 'none'; }
@@ -418,7 +430,7 @@ async function loadRecentCalls() {
                 <span class="status-badge ${c.status === 'completed' ? 'good' : c.status === 'failed' ? 'danger' : 'neutral'}"><span class="dot"></span> ${c.status}</span>
             </div>
             <div class="call-meta">
-                ${c.call_length ? `Duration: ${c.call_length} min` : ''}
+                ${c.call_length ? `Duration: ${Math.round(Number(c.call_length))} min` : ''}
                 ${c.created_at ? ` | ${new Date(c.created_at).toLocaleString()}` : ''}
                 ${c.call_id ? ` | ID: ${c.call_id}` : ''}
             </div>
@@ -507,7 +519,7 @@ async function simulateCall() {
             ${data.alert_details && data.alert_details.length ? `
                 <div class="notify-section">
                     <h4>Alerts & Family Notifications</h4>
-                    ${data.alert_details.map(a => `
+                    ${sortAlertsBySeverity(data.alert_details).map(a => `
                         <div class="notify-card ${a.severity}">
                             <span class="severity ${a.severity}">${a.severity}</span>
                             <span>${a.message}</span>
@@ -542,7 +554,7 @@ async function loadAlertsPage() {
         const alerts = await fetchJSON('/api/alerts?acknowledged=true');
         const el = document.getElementById('alerts-full-list');
         if (!alerts.length) { el.innerHTML = '<p class="empty-state">No alerts.</p>'; return; }
-        el.innerHTML = alerts.map(a => `<div class="alert-card ${a.severity}"><div style="flex:1;"><span class="severity ${a.severity}">${a.severity}</span> <strong>${a.alert_type.replace(/_/g,' ')}</strong><div style="margin-top:0.25rem;">${a.message}</div><div style="font-size:0.75rem;color:var(--gray-500);margin-top:0.25rem;">${new Date(a.timestamp).toLocaleString()}</div></div>${!a.acknowledged ? `<button class="btn btn-small" onclick="ackAlert('${a.id}')">Acknowledge</button>` : ''}</div>`).join('');
+        el.innerHTML = sortAlertsBySeverity(alerts).map(a => `<div class="alert-card ${a.severity}"><div style="flex:1;"><span class="severity ${a.severity}">${a.severity}</span> <strong>${a.alert_type.replace(/_/g,' ')}</strong><div style="margin-top:0.25rem;">${a.message}</div><div style="font-size:0.75rem;color:var(--gray-500);margin-top:0.25rem;">${new Date(a.timestamp).toLocaleString()}</div></div>${!a.acknowledged ? `<button class="btn btn-small" onclick="ackAlert('${a.id}')">Acknowledge</button>` : ''}</div>`).join('');
     } catch(e) { console.error(e); }
 }
 async function ackAlert(id) { await fetchJSON(`/api/alerts/${encodeURIComponent(id)}/acknowledge`, { method: 'PUT' }); loadAlertsPage(); loadSeniors(); }

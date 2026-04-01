@@ -17,6 +17,8 @@ Graph model:
 from __future__ import annotations
 
 import logging
+from collections import defaultdict
+from datetime import datetime
 from typing import Any
 
 from neo4j import GraphDatabase
@@ -297,20 +299,73 @@ def get_latest_checkins() -> list[dict]:
 def store_alert(alert_id: str, senior_phone: str, senior_name: str,
                 timestamp: str, alert_type: str, severity: str,
                 message: str) -> None:
-    """Store an alert and link to senior."""
+    """Store an alert and link to senior. MERGE on id avoids duplicate nodes if the same id is stored twice."""
     run_write("""
         MATCH (s:Senior {phone: $phone})
-        CREATE (a:Alert {
-            id: $id, timestamp: $timestamp, alert_type: $type,
-            severity: $severity, message: $message, acknowledged: false,
-            senior_name: $senior_name
-        })
+        MERGE (a:Alert {id: $id})
+        ON CREATE SET
+            a.timestamp = $timestamp, a.alert_type = $type,
+            a.severity = $severity, a.message = $message, a.acknowledged = false,
+            a.senior_name = $senior_name
         MERGE (s)-[:HAS_ALERT]->(a)
     """, {
         "phone": senior_phone, "id": alert_id, "timestamp": timestamp,
         "type": alert_type, "severity": severity, "message": message,
         "senior_name": senior_name,
     })
+
+
+def _severity_rank(severity: str | None) -> int:
+    return {"critical": 0, "high": 1, "medium": 2, "low": 3}.get((severity or "").lower(), 99)
+
+
+def _alert_ts_sort_value(ts: str | None) -> float:
+    if not ts:
+        return 0.0
+    try:
+        s = ts.replace("Z", "+00:00") if ts.endswith("Z") else ts
+        return datetime.fromisoformat(s).timestamp()
+    except Exception:
+        return 0.0
+
+
+def dedupe_alerts() -> dict[str, int]:
+    """Remove duplicate :Alert nodes per (senior phone, message).
+
+    Keeps one alert per group: highest severity, then newest timestamp, then unacknowledged over acknowledged.
+    """
+    rows = run_query("""
+        MATCH (s:Senior)-[:HAS_ALERT]->(a:Alert)
+        RETURN s.phone AS senior_phone, a.id AS id, a.message AS message,
+               a.timestamp AS timestamp, a.severity AS severity, a.acknowledged AS acknowledged
+    """)
+    groups: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
+    for r in rows:
+        msg = r.get("message") or ""
+        groups[(r["senior_phone"], msg)].append(r)
+
+    to_delete: list[str] = []
+    for _key, items in groups.items():
+        if len(items) <= 1:
+            continue
+        items.sort(key=lambda x: (
+            _severity_rank(x.get("severity")),
+            -_alert_ts_sort_value(x.get("timestamp")),
+            1 if x.get("acknowledged") else 0,
+            x.get("id") or "",
+        ))
+        for x in items[1:]:
+            to_delete.append(x["id"])
+
+    if to_delete:
+        run_write("""
+            MATCH (a:Alert)
+            WHERE a.id IN $ids
+            DETACH DELETE a
+        """, {"ids": to_delete})
+
+    merged = sum(1 for v in groups.values() if len(v) > 1)
+    return {"duplicate_groups": merged, "alerts_removed": len(to_delete)}
 
 
 def get_alerts(acknowledged: bool = False) -> list[dict]:
@@ -321,7 +376,9 @@ def get_alerts(acknowledged: bool = False) -> list[dict]:
             RETURN a.id AS id, s.phone AS senior_phone, a.senior_name AS senior_name,
                    a.timestamp AS timestamp, a.alert_type AS alert_type,
                    a.severity AS severity, a.message AS message, a.acknowledged AS acknowledged
-            ORDER BY a.timestamp DESC
+            ORDER BY CASE toLower(a.severity)
+                     WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3
+                     ELSE 99 END ASC, a.timestamp DESC
         """
     else:
         query = """
@@ -330,7 +387,9 @@ def get_alerts(acknowledged: bool = False) -> list[dict]:
             RETURN a.id AS id, s.phone AS senior_phone, a.senior_name AS senior_name,
                    a.timestamp AS timestamp, a.alert_type AS alert_type,
                    a.severity AS severity, a.message AS message, a.acknowledged AS acknowledged
-            ORDER BY a.timestamp DESC
+            ORDER BY CASE toLower(a.severity)
+                     WHEN 'critical' THEN 0 WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3
+                     ELSE 99 END ASC, a.timestamp DESC
         """
     return [dict(r) for r in run_query(query)]
 

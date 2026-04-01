@@ -343,20 +343,11 @@ sequenceDiagram
 
 Each follows: `Webhook → Question/Prompt → Gemini LLM → Response`
 
-### 🏥 Detailed Pipeline Workflow: Neo4j Graph Chat
-The **Neo4j Graph Chat** enables doctors to perform natural language exploration of the care graph using **RocketRide AI** as the orchestrator.
-
-**Standard Flow:**
-1.  **Doctor Input**: A natural language question is typed into the dashboard (e.g., *"What medications is Margaret Park taking and has she reported any side effects?"*).
-2.  **RocketRide Webhook**: The question hits the `chat_1` node (Source) in the pipeline.
-3.  **Gemini LLM Reasoning**: The `llm_gemini_1` node uses **Gemini 2.5 Flash** to analyze the question against the documented **Neo4j Graph Schema**.
-4.  **Cypher Generation**: Gemini intelligently generates a precise **Cypher query** based on the patient's data, symptoms, and relationships in the graph.
-5.  **Neo4j Execution**: The `db_neo4j_1` node executes the query against the CareGraph database using stored environment credentials.
-6.  **Contextual Response**: Gemini synthesizes the graph results back into a professional medical summary for the doctor.
-
-**Setup:** Install RocketRide VS Code extension → Open .pipe file → Configure Gemini key → Click play
-
-**Inference chain:** RocketRide pipeline → GMI Cloud (Qwen3-235B) fallback → empty
+### 🏥 Pipeline Workflow: Neo4j Graph Chat
+The **Neo4j Graph Chat** follows a simple visual flow in RocketRide:
+1.  **Chat Source Box**: Captures the doctor's question in the chat interface.
+2.  **Neo4j Database Tool Box**: Connects to the Neo4j graph and receives the question.
+3.  **Gemini LLM Box**: Connected directly to the Neo4j box to handle query generation and provide the final response to the doctor.
 
 ---
 

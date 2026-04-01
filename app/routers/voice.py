@@ -167,7 +167,7 @@ async def process_completed_call(call_id: str, phone: str):
         "concerns": analysis["concerns"],
         "service_requests": analysis["service_requests"],
     }
-    alerts = evaluate_checkin(checkin_data, senior["name"])
+    alerts = evaluate_checkin(checkin_data, senior["name"], source_key=checkin_key)
 
     return {
         "status": "processed",
@@ -236,7 +236,7 @@ async def bland_webhook(request: Request):
         "concerns": analysis["concerns"],
         "service_requests": analysis["service_requests"],
     }
-    alerts = evaluate_checkin(checkin_data, senior["name"])
+    alerts = evaluate_checkin(checkin_data, senior["name"], source_key=checkin_key)
 
     return {
         "status": "processed",

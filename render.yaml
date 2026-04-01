@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: caregraph
+    runtime: python
+    plan: starter
+    autoDeploy: true
+    buildCommand: pip install uv && uv sync
+    startCommand: uv run uvicorn main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: ENVIRONMENT
+        value: production
+      - key: BASE_URL
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+      - key: DEMO_USERNAME
+        sync: false
+      - key: DEMO_PASSWORD
+        sync: false
+      - key: NEO4J_URI
+        sync: false
+      - key: NEO4J_USER
+        sync: false
+      - key: NEO4J_PASSWORD
+        sync: false
+      - key: NEO4J_DATABASE
+        sync: false
+      - key: ROCKETRIDE_URI
+        sync: false
+      - key: ROCKETRIDE_APIKEY
+        sync: false
+      - key: BLAND_API_KEY
+        sync: false
+      - key: GMI_BASE_URL
+        value: https://api.gmi-serving.com/v1
+      - key: GMI_API_KEY
+        sync: false
+      - key: GMI_MODEL
+        value: Qwen/Qwen3-235B-A22B-Instruct-2507-FP8

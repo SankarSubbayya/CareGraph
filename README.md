@@ -270,6 +270,17 @@ sequenceDiagram
 
 ---
 
+## Key Demo Scenarios
+
+| Scenario | What Neo4j Does | What AI Does |
+|----------|----------------|-------------|
+| Margaret takes Metformin + Lisinopril | Detects INTERACTS_WITH relationship | Qwen3-235B explains the interaction risk |
+| Dorothy reports dizziness | Matches symptom to Lisinopril SIDE_EFFECT | Suggests talking to doctor |
+| 3 seniors report similar symptoms | Finds shared symptom paths in graph | Identifies potential cause |
+| Senior needs a doctor | Traverses Symptom → Condition → Doctor → Clinic | Recommends specific doctors |
+
+---
+
 ## API Endpoints (33 total)
 
 ### Seniors

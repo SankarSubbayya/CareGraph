@@ -30,6 +30,13 @@ def _unique_concerns_preserve_order(concerns: list) -> list[str]:
     return out
 
 
+def _normalize_source_key(source_key: str | None, phone: str, fallback_timestamp: str) -> str:
+    """Build a stable prefix for alert IDs so reprocessing the same check-in reuses alerts."""
+    if source_key:
+        return source_key.replace(" ", "_")
+    return f"{phone}:{fallback_timestamp}"
+
+
 def _get_family_contacts(senior_phone: str) -> list[dict]:
     """Look up emergency contacts for a senior from Neo4j."""
     try:
@@ -45,36 +52,37 @@ def _get_family_contacts(senior_phone: str) -> list[dict]:
         return []
 
 
-def evaluate_checkin(checkin: dict, senior_name: str = "") -> list[dict]:
+def evaluate_checkin(checkin: dict, senior_name: str = "", source_key: str | None = None) -> list[dict]:
     """Evaluate a check-in and return alerts."""
     alerts = []
     now = datetime.now(timezone.utc).isoformat()
     who = senior_name or checkin.get("senior_phone", "")
     phone = checkin.get("senior_phone", "")
+    alert_source = _normalize_source_key(source_key, phone, now)
 
     concerns = _unique_concerns_preserve_order(checkin.get("concerns", []))
     emergency_matches = [c for c in concerns if c.lower() in _EMERGENCY_WORDS]
     if emergency_matches:
         detail = "; ".join(emergency_matches)
-        alert = {"id": f"{phone}:{now}:emergency", "senior_phone": phone, "senior_name": senior_name,
+        alert = {"id": f"{alert_source}:emergency", "senior_phone": phone, "senior_name": senior_name,
                  "timestamp": now, "alert_type": "emergency", "severity": "critical",
                  "message": f"Emergency: {detail}. Immediate attention needed for {who}."}
         alerts.append(alert)
 
     if checkin.get("mood") == "concerning" or checkin.get("wellness_score", 10) < 4:
-        alert = {"id": f"{phone}:{now}:low_mood", "senior_phone": phone, "senior_name": senior_name,
+        alert = {"id": f"{alert_source}:low_mood", "senior_phone": phone, "senior_name": senior_name,
                  "timestamp": now, "alert_type": "low_mood", "severity": "high",
                  "message": f"{who} reported low mood (wellness: {checkin.get('wellness_score', 0)}/10)."}
         alerts.append(alert)
 
     if checkin.get("medication_taken") is False:
-        alert = {"id": f"{phone}:{now}:missed_med", "senior_phone": phone, "senior_name": senior_name,
+        alert = {"id": f"{alert_source}:missed_med", "senior_phone": phone, "senior_name": senior_name,
                  "timestamp": now, "alert_type": "missed_medication", "severity": "medium",
                  "message": f"{who} has not taken their medications today."}
         alerts.append(alert)
 
     if "loneliness" in concerns:
-        alert = {"id": f"{phone}:{now}:loneliness", "senior_phone": phone, "senior_name": senior_name,
+        alert = {"id": f"{alert_source}:loneliness", "senior_phone": phone, "senior_name": senior_name,
                  "timestamp": now, "alert_type": "loneliness", "severity": "medium",
                  "message": f"{who} expressed feelings of loneliness."}
         alerts.append(alert)
@@ -82,7 +90,7 @@ def evaluate_checkin(checkin: dict, senior_name: str = "") -> list[dict]:
     for svc in checkin.get("service_requests", []):
         svc_type = svc.get("type", "other")
         severity = "critical" if svc_type == "medical_emergency" else "medium"
-        alert = {"id": f"{phone}:{now}:service_{svc_type}", "senior_phone": phone, "senior_name": senior_name,
+        alert = {"id": f"{alert_source}:service_{svc_type}", "senior_phone": phone, "senior_name": senior_name,
                  "timestamp": now, "alert_type": "service_request", "severity": severity,
                  "message": f"{who} requested help: {svc.get('label', svc_type)}. {svc.get('details', '')}"}
         alerts.append(alert)

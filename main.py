@@ -4,14 +4,16 @@ import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
+from app.config import settings
 from app.routers import seniors, checkins, alerts, voice, crew
 from app.routers.graph import router as graph_router
 from app.graph_db import setup_schema, close_driver
+from app.security import verify_demo_credentials
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
@@ -27,7 +29,19 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="CareGraph", description="Graph-powered senior care with Neo4j + RocketRide AI", version="1.0.0", lifespan=lifespan)
 
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origin_list or ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+@app.middleware("http")
+async def demo_auth_middleware(request: Request, call_next):
+    verify_demo_credentials(request)
+    return await call_next(request)
 
 app.include_router(seniors.router)
 app.include_router(checkins.router)
@@ -49,6 +63,15 @@ async def serve_dashboard():
     return FileResponse(str(FRONTEND_DIR / "index.html"))
 
 
+@app.get("/health")
+async def healthcheck():
+    return {
+        "status": "ok",
+        "environment": settings.environment,
+        "demo_auth_enabled": settings.demo_auth_enabled,
+    }
+
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=settings.environment == "development")

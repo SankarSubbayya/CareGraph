@@ -331,20 +331,23 @@ sequenceDiagram
 
 ## RocketRide AI Pipelines
 
-4 visual pipelines in `pipelines/` directory:
+5 visual pipelines in `pipelines/` directory:
 
-| Pipeline | Purpose |
-|----------|---------|
-| `checkin_analysis.pipe` | Transcript → symptoms, mood, urgency |
-| `drug_interaction.pipe` | Drug pair → plain-language explanation |
-| `care_recommendation.pipe` | Graph data → personalized care plan |
-| `condition_suggestion.pipe` | Symptom cluster → possible conditions |
+| Pipeline | Purpose | Use Case for Doctors |
+|----------|---------|----------------------|
+| `checkin_analysis.pipe` | Transcript → symptoms, mood, urgency | Automatic symptom extraction from patient calls |
+| `drug_interaction.pipe` | Drug pair → plain-language explanation | Explaining *why* two meds interact based on graph data |
+| `care_recommendation.pipe` | Graph data → personalized care plan | Generating tailored clinical steps for family caregivers |
+| `condition_suggestion.pipe` | Symptom cluster → possible conditions | Differential reasoning based on reported trends |
+| `neo4j_graph_chat.pipe` | **Natural Language Graph Chat** | **Clinical Data Retrieval**: Doctors can chat directly to get patient data, symptoms, and medical history across the entire graph. |
 
-Each follows: `Webhook → Prompt → Gemini LLM → Response`
+Each follows: `Webhook → Question/Prompt → Gemini LLM → Response`
 
-**Setup:** Install RocketRide VS Code extension → Open .pipe file → Configure Gemini key → Click play
-
-**Inference chain:** RocketRide pipeline → GMI Cloud (Qwen3-235B) fallback → empty
+### 🏥 Pipeline Workflow: Neo4j Graph Chat
+The **Neo4j Graph Chat** follows a simple visual flow in RocketRide:
+1.  **Chat Source Box**: Captures the doctor's question in the chat interface.
+2.  **Neo4j Database Tool Box**: Connects to the Neo4j graph and receives the question.
+3.  **Gemini LLM Box**: Connected directly to the Neo4j box to handle query generation and provide the final response to the doctor.
 
 ---
 

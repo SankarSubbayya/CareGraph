@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     # Optional demo protection
     demo_username: str = ""
     demo_password: str = ""
+    admin_api_token: str = Field(default="", validation_alias=AliasChoices("ADMIN_API_TOKEN"))
 
     @computed_field
     @property

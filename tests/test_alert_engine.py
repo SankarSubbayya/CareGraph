@@ -63,6 +63,36 @@ def test_duplicate_emergency_concerns_yield_one_critical_alert():
     assert "fell" in emergency[0]["message"].lower()
 
 
+def test_same_source_key_produces_same_alert_ids():
+    checkin = {
+        "senior_phone": "+14155551001",
+        "mood": "concerning",
+        "wellness_score": 2,
+        "medication_taken": False,
+        "concerns": ["fell"],
+        "service_requests": [],
+    }
+    alerts_a = evaluate_checkin(checkin, "Margaret Johnson", source_key="+14155551001:bland_abc123")
+    alerts_b = evaluate_checkin(checkin, "Margaret Johnson", source_key="+14155551001:bland_abc123")
+
+    assert [a["id"] for a in alerts_a] == [a["id"] for a in alerts_b]
+
+
+def test_different_source_keys_produce_different_alert_ids():
+    checkin = {
+        "senior_phone": "+14155551001",
+        "mood": "concerning",
+        "wellness_score": 2,
+        "medication_taken": False,
+        "concerns": ["fell"],
+        "service_requests": [],
+    }
+    alerts_a = evaluate_checkin(checkin, "Margaret Johnson", source_key="+14155551001:bland_abc123")
+    alerts_b = evaluate_checkin(checkin, "Margaret Johnson", source_key="+14155551001:bland_def456")
+
+    assert [a["id"] for a in alerts_a] != [a["id"] for a in alerts_b]
+
+
 # ---------------------------------------------------------------------------
 # Low mood / wellness alerts
 # ---------------------------------------------------------------------------

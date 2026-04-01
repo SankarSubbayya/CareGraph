@@ -53,7 +53,7 @@ async def simulate_checkin(phone: str, transcript: str = "I'm feeling good today
         "concerns": analysis["concerns"],
         "service_requests": analysis["service_requests"],
     }
-    alerts = evaluate_checkin(checkin_data, senior["name"])
+    alerts = evaluate_checkin(checkin_data, senior["name"], source_key=checkin_key)
 
     return {
         "status": "processed",

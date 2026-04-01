@@ -194,15 +194,23 @@ def store_checkin(senior_phone: str, call_id: str, timestamp: str,
                   medication_taken: bool | None, concerns: list[str],
                   service_requests: list[dict], summary: str) -> str:
     """Store a check-in and create symptom/concern relationships."""
-    checkin_key = f"{senior_phone}:{timestamp}"
+    checkin_key = f"{senior_phone}:{call_id}" if call_id else f"{senior_phone}:{timestamp}"
 
     run_write("""
         MATCH (s:Senior {phone: $phone})
-        CREATE (ci:CheckIn {
-            key: $key, call_id: $call_id, timestamp: $timestamp,
-            transcript: $transcript, mood: $mood, wellness_score: $score,
-            medication_taken: $med_taken, summary: $summary
-        })
+        MERGE (ci:CheckIn {key: $key})
+        ON CREATE SET
+            ci.call_id = $call_id, ci.timestamp = $timestamp,
+            ci.transcript = $transcript, ci.mood = $mood, ci.wellness_score = $score,
+            ci.medication_taken = $med_taken, ci.summary = $summary
+        ON MATCH SET
+            ci.call_id = coalesce(ci.call_id, $call_id),
+            ci.timestamp = coalesce(ci.timestamp, $timestamp),
+            ci.transcript = CASE WHEN ci.transcript IS NULL OR ci.transcript = '' THEN $transcript ELSE ci.transcript END,
+            ci.mood = coalesce(ci.mood, $mood),
+            ci.wellness_score = coalesce(ci.wellness_score, $score),
+            ci.medication_taken = coalesce(ci.medication_taken, $med_taken),
+            ci.summary = CASE WHEN ci.summary IS NULL OR ci.summary = '' THEN $summary ELSE ci.summary END
         MERGE (s)-[:CHECKED_IN]->(ci)
     """, {
         "phone": senior_phone, "key": checkin_key, "call_id": call_id,

@@ -55,3 +55,25 @@ def verify_demo_credentials(request: Request) -> None:
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Basic"},
         )
+
+
+def verify_admin_token(request: Request) -> None:
+    """Require an explicit admin token for sensitive maintenance endpoints."""
+    configured_token = settings.admin_api_token
+    if not configured_token:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Admin API token is not configured",
+        )
+
+    bearer = request.headers.get("Authorization", "")
+    if bearer.startswith("Bearer "):
+        presented_token = bearer.split(" ", 1)[1]
+    else:
+        presented_token = request.headers.get("X-Admin-Token", "")
+
+    if not presented_token or not secrets.compare_digest(presented_token, configured_token):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid admin token",
+        )

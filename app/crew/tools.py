@@ -250,5 +250,9 @@ class EvaluateAlertsTool(BaseTool):
             "service_requests": kwargs.get("service_requests", []),
         }
         senior_name = kwargs.get("senior_name", "Unknown")
-        alerts = evaluate_checkin(checkin_data, senior_name)
+        alerts = evaluate_checkin(
+            checkin_data,
+            senior_name,
+            source_key=kwargs.get("source_key") or kwargs.get("checkin_key") or kwargs.get("call_id"),
+        )
         return json.dumps(alerts, default=str)

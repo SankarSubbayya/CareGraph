@@ -285,6 +285,88 @@ async function loadCareRec() {
     } catch(e) { el.innerHTML = `Error: ${e.message}`; }
 }
 
+async function loadConditionSuggestions() {
+    const phone = document.getElementById('insight-senior-select').value;
+    if (!phone) return;
+    const el = document.getElementById('insights-content');
+    el.innerHTML = '<p class="loading-text">Analyzing symptoms with Qwen3-235B...</p>';
+    try {
+        const data = await fetchJSON(`/api/graph/condition-suggestions/${encodeURIComponent(phone)}`);
+        if (!data.suggestions || !data.suggestions.length) {
+            el.innerHTML = `<h3>Condition Suggestions</h3><p>No conditions suggested. ${data.symptoms?.length ? 'Symptoms: ' + data.symptoms.join(', ') : 'No symptoms reported yet.'}</p>`;
+            return;
+        }
+        el.innerHTML = `<h3>Condition Suggestions</h3>
+            <p style="color:var(--gray-500);margin-bottom:1rem;">Based on symptoms: ${(data.symptoms || []).join(', ')}</p>
+            ${data.suggestions.map(s => `
+                <div class="alert-card ${s.likelihood === 'high' ? 'high' : s.likelihood === 'medium' ? 'medium' : ''}">
+                    <div style="flex:1">
+                        <strong>${s.condition}</strong> <span class="severity ${s.likelihood === 'high' ? 'high' : s.likelihood === 'medium' ? 'medium' : ''}">${s.likelihood}</span>
+                        <p style="margin-top:0.25rem;">${s.action}</p>
+                    </div>
+                </div>
+            `).join('')}
+            <p style="margin-top:1rem;font-size:0.8rem;color:var(--gray-500);">These are AI suggestions, not diagnoses. Always consult a doctor.</p>`;
+    } catch(e) { el.innerHTML = `Error: ${e.message}`; }
+}
+
+async function loadDoctorsForSenior() {
+    const phone = document.getElementById('insight-senior-select').value;
+    if (!phone) return;
+    const el = document.getElementById('insights-content');
+    el.innerHTML = '<p class="loading-text">Finding recommended doctors from graph...</p>';
+    try {
+        const data = await fetchJSON(`/api/graph/doctors/for-senior/${encodeURIComponent(phone)}`);
+        if (!data.recommended_doctors || !data.recommended_doctors.length) {
+            el.innerHTML = '<h3>Recommended Doctors</h3><p>No doctors matched to this senior\'s conditions. Report symptoms first to get doctor recommendations.</p>';
+            return;
+        }
+        el.innerHTML = `<h3>Recommended Doctors</h3>
+            <p style="color:var(--gray-500);margin-bottom:1rem;">Matched via Neo4j: Symptoms → Conditions → Doctors who CAN_TREAT</p>
+            <table class="data-table"><thead><tr><th>Doctor</th><th>Specialty</th><th>Conditions</th><th>Phone</th><th>Rating</th></tr></thead><tbody>
+            ${data.recommended_doctors.map(d => `
+                <tr>
+                    <td><strong>${d.name}</strong>${d.senior_care ? ' <span style="color:var(--success);font-size:0.75rem;">Senior Care</span>' : ''}</td>
+                    <td>${d.specialty || '—'}</td>
+                    <td>${(d.conditions || []).join(', ') || '—'}</td>
+                    <td>${d.phone || '—'}</td>
+                    <td>${d.rating ? d.rating + '/5' : '—'}</td>
+                </tr>
+            `).join('')}
+            </tbody></table>`;
+    } catch(e) { el.innerHTML = `Error: ${e.message}`; }
+}
+
+async function searchBySymptom() {
+    const symptom = document.getElementById('search-symptom').value.trim();
+    if (!symptom) return;
+    const el = document.getElementById('insights-content');
+    el.innerHTML = '<p class="loading-text">Searching graph...</p>';
+    try {
+        const data = await fetchJSON(`/api/graph/seniors-by-symptom/${encodeURIComponent(symptom)}`);
+        if (!data || !data.length) { el.innerHTML = `<h3>Seniors with "${symptom}"</h3><p>No seniors found with this symptom.</p>`; return; }
+        el.innerHTML = `<h3>Seniors reporting "${symptom}"</h3>
+            <table class="data-table"><thead><tr><th>Senior</th><th>Phone</th></tr></thead><tbody>
+            ${data.map(s => `<tr><td>${s.name}</td><td>${s.phone}</td></tr>`).join('')}
+            </tbody></table>`;
+    } catch(e) { el.innerHTML = `Error: ${e.message}`; }
+}
+
+async function searchByMedication() {
+    const med = document.getElementById('search-medication').value.trim();
+    if (!med) return;
+    const el = document.getElementById('insights-content');
+    el.innerHTML = '<p class="loading-text">Searching graph...</p>';
+    try {
+        const data = await fetchJSON(`/api/graph/seniors-by-medication/${encodeURIComponent(med)}`);
+        if (!data || !data.length) { el.innerHTML = `<h3>Seniors on "${med}"</h3><p>No seniors found on this medication.</p>`; return; }
+        el.innerHTML = `<h3>Seniors taking "${med}"</h3>
+            <table class="data-table"><thead><tr><th>Senior</th><th>Phone</th></tr></thead><tbody>
+            ${data.map(s => `<tr><td>${s.name}</td><td>${s.phone}</td></tr>`).join('')}
+            </tbody></table>`;
+    } catch(e) { el.innerHTML = `Error: ${e.message}`; }
+}
+
 // ── Voice Calls (Bland AI) ──
 async function initiateCall() {
     const phone = document.getElementById('voice-senior-select').value;

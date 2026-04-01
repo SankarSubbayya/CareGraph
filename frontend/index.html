@@ -10,8 +10,9 @@
 </head>
 <body>
     <nav class="sidebar">
-        <div class="sidebar-logo"><span class="logo-icon">🔗</span><span class="logo-text">CareGraph</span></div>
+        <a href="/" class="sidebar-logo" style="text-decoration:none;color:inherit;"><span class="logo-icon">🔗</span><span class="logo-text">CareGraph</span></a>
         <div class="sidebar-label">MENU</div>
+        <a href="/" class="sidebar-item"><span class="sidebar-icon">🏠</span> Home</a>
         <a href="#" class="sidebar-item active" onclick="showPage('seniors')"><span class="sidebar-icon">👥</span> Seniors</a>
         <a href="#" class="sidebar-item" onclick="showPage('graph')"><span class="sidebar-icon">🔗</span> Graph View</a>
         <a href="#" class="sidebar-item" onclick="showPage('reasoning')"><span class="sidebar-icon">🧩</span> Graph Reasoning</a>
@@ -80,13 +81,23 @@
 
         <!-- Page: AI Insights -->
         <div id="page-insights" class="page">
-            <div class="page-header"><h1>AI Insights</h1></div>
+            <div class="page-header"><h1>AI Insights (Neo4j + Qwen3-235B)</h1></div>
             <div class="graph-controls">
                 <select id="insight-senior-select"><option value="">Select a senior...</option></select>
+            </div>
+            <div class="graph-controls" style="margin-top:0;">
                 <button class="btn" onclick="loadDrugInteractions()">Drug Interactions</button>
                 <button class="btn" onclick="loadSideEffects()">Side Effects</button>
                 <button class="btn" onclick="loadSimilarSymptoms()">Similar Symptoms</button>
+                <button class="btn" onclick="loadConditionSuggestions()">Condition Suggestions</button>
+                <button class="btn" onclick="loadDoctorsForSenior()">Recommended Doctors</button>
                 <button class="btn btn-primary" onclick="loadCareRec()">AI Care Plan</button>
+            </div>
+            <div class="graph-controls" style="margin-top:0;">
+                <input type="text" id="search-symptom" placeholder="Search by symptom (e.g. dizzy)" style="padding:0.45rem;border:1px solid var(--gray-300);border-radius:10px;font-size:0.85rem;min-width:180px;">
+                <button class="btn" onclick="searchBySymptom()">Find Seniors</button>
+                <input type="text" id="search-medication" placeholder="Search by medication (e.g. Lisinopril)" style="padding:0.45rem;border:1px solid var(--gray-300);border-radius:10px;font-size:0.85rem;min-width:180px;">
+                <button class="btn" onclick="searchByMedication()">Find Seniors</button>
             </div>
             <div id="insights-content" class="insights-content"></div>
         </div>

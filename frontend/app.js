@@ -348,7 +348,7 @@ async function loadRecentCalls() {
                 <span class="status-badge ${c.status === 'completed' ? 'good' : c.status === 'failed' ? 'danger' : 'neutral'}"><span class="dot"></span> ${c.status}</span>
             </div>
             <div class="call-meta">
-                ${c.call_length ? `Duration: ${c.call_length} min` : ''}
+                ${c.call_length ? `Duration: ${Math.round(Number(c.call_length))} min` : ''}
                 ${c.created_at ? ` | ${new Date(c.created_at).toLocaleString()}` : ''}
                 ${c.call_id ? ` | ID: ${c.call_id}` : ''}
             </div>

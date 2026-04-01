@@ -51,7 +51,8 @@ def close_driver():
 def run_query(query: str, params: dict | None = None) -> list[dict]:
     """Run a Cypher query and return results as list of dicts."""
     driver = get_driver()
-    with driver.session() as session:
+    session_kwargs = {"database": settings.neo4j_database} if settings.neo4j_database else {}
+    with driver.session(**session_kwargs) as session:
         result = session.run(query, params or {})
         return [dict(record) for record in result]
 
@@ -59,7 +60,8 @@ def run_query(query: str, params: dict | None = None) -> list[dict]:
 def run_write(query: str, params: dict | None = None) -> None:
     """Run a write Cypher query."""
     driver = get_driver()
-    with driver.session() as session:
+    session_kwargs = {"database": settings.neo4j_database} if settings.neo4j_database else {}
+    with driver.session(**session_kwargs) as session:
         session.run(query, params or {})
 
 

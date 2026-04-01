@@ -164,22 +164,53 @@ CareGraph triggers call → Bland AI dials senior → AI voice agent converses
 
 ## Quick Start
 
-```bash
-# Start Neo4j
-docker run -d --name neo4j -p 7474:7474 -p 7687:7687 \
-  -e NEO4J_AUTH=neo4j/careGraph2026 neo4j:5
+### Neo4j Aura Setup
 
+Create a `.env` file with your Aura credentials:
+
+```env
+NEO4J_URI=neo4j+s://62ec3403.databases.neo4j.io
+NEO4J_USERNAME=62ec3403
+NEO4J_PASSWORD=your-aura-password
+NEO4J_DATABASE=62ec3403
+
+BLAND_API_KEY=your-bland-api-key
+ROCKETRIDE_URI=http://localhost:5565
+ROCKETRIDE_APIKEY=
+GMI_API_KEY=
+```
+
+The app accepts both `NEO4J_USER` and `NEO4J_USERNAME`. For Aura, `NEO4J_USERNAME` and `NEO4J_DATABASE` match the values shown in the Aura console.
+
+```bash
 # Install dependencies
 uv sync
 
 # Start the server
 uv run python main.py
 
-# Seed demo data
+# Seed demo data into Aura
 uv run python scripts/seed_data.py
 
 # Open dashboard
 open http://localhost:8000
+```
+
+### Local Neo4j Alternative
+
+If you want to run Neo4j locally instead of Aura:
+
+```bash
+docker run -d --name neo4j -p 7474:7474 -p 7687:7687 \
+  -e NEO4J_AUTH=neo4j/careGraph2026 neo4j:5
+```
+
+Then use:
+
+```env
+NEO4J_URI=bolt://localhost:7687
+NEO4J_USER=neo4j
+NEO4J_PASSWORD=careGraph2026
 ```
 
 ## Key Demo Scenarios

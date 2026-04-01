@@ -13,7 +13,7 @@ def test_default_settings(monkeypatch):
     assert s.neo4j_user == "neo4j"
     assert s.rocketride_uri == "http://localhost:5565"
     assert s.gmi_base_url == "https://api.gmi-serving.com/v1"
-    assert s.gmi_model == "deepseek-ai/DeepSeek-R1"
+    assert s.gmi_model == "Qwen/Qwen3-235B-A22B-Instruct-2507-FP8"
     assert s.skip_auth is True
 
 
@@ -28,3 +28,15 @@ def test_settings_override():
     assert s.neo4j_uri == "neo4j+s://test.databases.neo4j.io"
     assert s.gmi_api_key == "test-key"
     assert s.bland_api_key == "org_test"
+
+
+def test_aura_env_names_are_normalized(monkeypatch):
+    monkeypatch.setenv("NEO4J_URI", "neo4j+s://62ec3403.databases.neo4j.io")
+    monkeypatch.setenv("NEO4J_USERNAME", "62ec3403")
+    monkeypatch.setenv("NEO4J_PASSWORD", "secret")
+    monkeypatch.setenv("NEO4J_DATABASE", "62ec3403")
+
+    s = Settings(_env_file=None)
+    assert s.neo4j_uri == "neo4j+s://62ec3403.databases.neo4j.io"
+    assert s.neo4j_user == "62ec3403"
+    assert s.neo4j_database == "62ec3403"

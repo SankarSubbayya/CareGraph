@@ -1,10 +1,18 @@
 # CareGraph
 
-**AI-powered senior care intelligence built with Neo4j + RocketRide AI + GMI Cloud + Bland AI + CrewAI**
+**AI-powered senior care intelligence** — Neo4j, RocketRide AI, GMI Cloud, Bland AI, and CrewAI.
 
-CareGraph calls seniors every day, builds a health knowledge graph, and alerts families before problems become emergencies.
+## The problem
 
-> Built for HackWithBay 2.0 Hackathon — Theme: Building Intelligent, Graph-Powered Applications with Neo4j and RocketRide AI
+Clinical care is **infrequent**; **symptoms and medications change daily**. **Elders** risk missed side effects and late escalation; **family caregivers** lack one trustworthy, connected picture. CareGraph adds **daily AI check-ins**, a **Neo4j graph** of meds, symptoms, and relationships, and **alerts** so issues surface **before** an emergency.
+
+**Demo:** [https://caregraph.onrender.com](https://caregraph.onrender.com) (hosted snapshot for UI exploration — use [Quick Start](#quick-start) for a full local stack).
+
+## Neo4j and RocketRide AI
+
+**Neo4j** — Aura or local; nodes and relationships for seniors, medications, symptoms, check-ins, doctors, and more. **Cypher** backs dashboard stats, network views, drug interactions, side-effect paths, and recommendations. See [NEO4J_ARCHITECTURE.md](NEO4J_ARCHITECTURE.md).
+
+**RocketRide AI** — `pipelines/*.pipe` orchestrates **Gemini** for transcripts, drug explanations, care plans, and condition hints; optional RocketRide server with **GMI Cloud fallback** in `app/services/rocketride.py` (expanded under **RocketRide AI Pipelines** later in this file).
 
 ---
 

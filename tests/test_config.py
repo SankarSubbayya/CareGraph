@@ -2,12 +2,24 @@
 
 from app.config import Settings
 
+# Env vars that .env sets and that would override test values
+_ENV_KEYS = (
+    "NEO4J_URI", "NEO4J_USER", "NEO4J_USERNAME", "NEO4J_PASSWORD", "NEO4J_DATABASE",
+    "GMI_API_KEY", "GMI_BASE_URL", "GMI_MODEL",
+    "BLAND_API_KEY", "ROCKETRIDE_URI", "ROCKETRIDE_APIKEY",
+    "BASE_URL", "ENVIRONMENT", "CORS_ORIGINS",
+    "DEMO_USERNAME", "DEMO_PASSWORD", "ADMIN_API_TOKEN",
+)
+
+
+def _clear_env(monkeypatch):
+    for key in _ENV_KEYS:
+        monkeypatch.delenv(key, raising=False)
+
 
 def test_default_settings(monkeypatch):
     """Test that defaults work when no .env is loaded."""
-    # Clear env vars that .env would set
-    for key in ("NEO4J_URI", "NEO4J_PASSWORD", "GMI_API_KEY", "BLAND_API_KEY"):
-        monkeypatch.delenv(key, raising=False)
+    _clear_env(monkeypatch)
 
     s = Settings(neo4j_password="test", _env_file=None)
     assert s.neo4j_user == "neo4j"
@@ -17,7 +29,9 @@ def test_default_settings(monkeypatch):
     assert s.skip_auth is True
 
 
-def test_settings_override():
+def test_settings_override(monkeypatch):
+    _clear_env(monkeypatch)
+
     s = Settings(
         neo4j_uri="neo4j+s://test.databases.neo4j.io",
         neo4j_password="secret",
@@ -31,6 +45,7 @@ def test_settings_override():
 
 
 def test_aura_env_names_are_normalized(monkeypatch):
+    _clear_env(monkeypatch)
     monkeypatch.setenv("NEO4J_URI", "neo4j+s://62ec3403.databases.neo4j.io")
     monkeypatch.setenv("NEO4J_USERNAME", "62ec3403")
     monkeypatch.setenv("NEO4J_PASSWORD", "secret")

@@ -40,7 +40,7 @@
       "config": {
         "profile": "gemini-2_5-flash",
         "gemini-2_5-flash": {
-          "apikey": ""
+          "apikey": "${ROCKETRIDE_GEMINI_APIKEY}"
         }
       },
       "ui": {

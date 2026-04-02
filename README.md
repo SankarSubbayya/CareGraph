@@ -6,6 +6,8 @@ CareGraph calls seniors every day, builds a health knowledge graph, and alerts f
 
 > Built for HackWithBay 2.0 Hackathon — Theme: Building Intelligent, Graph-Powered Applications with Neo4j and RocketRide AI
 
+**Cloud demo:** The app runs on Render at [https://caregraph.onrender.com](https://caregraph.onrender.com). **This is a demo deployment** for exploring the landing page and dashboard without a local setup; use the Quick Start below for full features, your own keys, and development.
+
 ---
 
 ## Quick Start

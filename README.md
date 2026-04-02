@@ -2,11 +2,23 @@
 
 **AI-powered senior care intelligence built with Neo4j + RocketRide AI + GMI Cloud + Bland AI + CrewAI**
 
-CareGraph calls seniors every day, builds a health knowledge graph, and alerts families before problems become emergencies.
+## The problem we're solving
+
+Healthcare for older adults is **episodic**: a clinician might see someone every few months, while daily life—mood, symptoms, meals, mobility, and **dozens of possible medication combinations**—unfolds in between. Isolation and chronic disease mean small changes add up quietly; by the time a crisis hits the ER, the story of *what changed and why* is often incomplete.
+
+**For elders**, that gap shows up as **unnoticed side effects**, **unexplained symptoms written off as “just aging,”** and delayed help when something is wrong. **For family caregivers**, it shows up as **constant worry**, uneven check-ins, medical facts trapped in phone calls and text threads, and the fear of missing the one day that mattered.
+
+CareGraph exists to **shrink that blind spot**: an automated daily touchpoint, a **structured memory of care** (who takes what, what was reported, how it connects in the graph), and **early signals** to caregivers and clinicians—so support is **proactive and dignified**, not only reactive after an emergency.
 
 > Built for HackWithBay 2.0 Hackathon — Theme: Building Intelligent, Graph-Powered Applications with Neo4j and RocketRide AI
 
 **Cloud demo:** The app runs on Render at [https://caregraph.onrender.com](https://caregraph.onrender.com). **This is a demo deployment** for exploring the landing page and dashboard without a local setup; use the Quick Start below for full features, your own keys, and development.
+
+## Neo4j and RocketRide AI
+
+**Neo4j** stores the care knowledge graph: seniors, medications, symptoms, conditions, check-ins, alerts, family contacts, doctors, and clinics as nodes, with typed relationships (for example, who takes which drugs, reported symptoms, drug–drug interactions, and symptom-to-medication side-effect links). The FastAPI backend runs **Cypher** queries against Neo4j (Aura in the cloud, or local/Docker) to power the dashboard: live stats, care-network and doctors-network views, drug-interaction and side-effect detection, cross-senior patterns, and doctor recommendations by traversing the graph instead of flat keyword search. For a deeper dive into the graph model, queries, and design, see [NEO4J_ARCHITECTURE.md](NEO4J_ARCHITECTURE.md).
+
+**RocketRide AI** provides **visual pipeline orchestration** for LLM steps. The `pipelines/` **`.pipe`** files define flows (webhook or prompt → **Gemini** → structured responses) for check-in transcript analysis, plain-language drug-interaction explanations, personalized care recommendations from graph context, and condition suggestions from symptom clusters. RocketRide integrates with the app when its server is running; if a pipeline is unavailable, inference can **fall back to GMI Cloud** (see `app/services/rocketride.py` and the RocketRide section later in this README).
 
 ---
 

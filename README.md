@@ -409,7 +409,7 @@ CareGraph/
 ├── scripts/
 │   ├── seed_data.py               # Demo seniors + medical knowledge
 │   └── seed_doctors.py            # 159 doctors + 38 clinics
-├── tests/                         # 56 tests (unit + integration)
+├── tests/                         # 60 tests (unit + integration)
 ├── data/                          # EHR sample data
 └── presentation/
     └── DEMO_SCRIPT.md             # 10-slide demo script
@@ -419,7 +419,7 @@ CareGraph/
 
 ## Tests
 
-56 tests — all passing:
+60 tests — all passing:
 
 ```bash
 uv run python -m pytest tests/ -v
@@ -429,9 +429,41 @@ uv run python -m pytest tests/ -v
 |-----------|-------|------|
 | test_models.py | 3 | Pydantic models |
 | test_call_analyzer.py | 19 | NLP: mood, meds, symptoms, services |
-| test_alert_engine.py | 10 | Alert rules + severity |
-| test_config.py | 2 | Settings |
+| test_alert_engine.py | 13 | Alert rules, severity, dedup, source keys |
+| test_config.py | 3 | Settings defaults, overrides, Aura alias normalization |
 | test_integration.py | 22 | Neo4j queries, API endpoints, full pipelines |
+
+---
+
+## Medical Disclaimer
+
+All AI-generated content includes disclaimers:
+- **System prompt** forces: *"This is AI-generated guidance. Always consult your doctor for medical decisions."*
+- **Drug interactions**: *"Consult your doctor before making any medication changes."*
+- **Condition suggestions**: *"Consult your doctor for proper diagnosis and treatment."*
+- **Bland AI voice agent**: *"Your doctor would know best about your specific situation."*
+- **Frontend**: Yellow disclaimer banner on all AI results pages
+
+---
+
+## Security
+
+- `.env` is gitignored — never committed
+- `.pipe` files use `${ROCKETRIDE_GEMINI_APIKEY}` env var reference — no hardcoded keys
+- `.env.example` provided with `<YourKeyHere>` placeholders for deployment
+- Optional demo auth via `DEMO_USERNAME` / `DEMO_PASSWORD` (browser basic auth)
+- Admin endpoints protected by `ADMIN_API_TOKEN`
+- See `PUBLIC_DEMO.md` for deployment guide
+
+---
+
+## Deployment
+
+### Render (one-click)
+`render.yaml` blueprint included. See `PUBLIC_DEMO.md` for details.
+
+### Environment Variables
+See `.env.example` for all required and optional variables.
 
 ---
 
@@ -440,3 +472,29 @@ uv run python -m pytest tests/ -v
 We contributed a **Bland AI tool node** to the RocketRide project:
 - PR: [rocketride-org/rocketride-server#521](https://github.com/rocketride-org/rocketride-server/pull/521)
 - Adds `make_call`, `get_call`, `analyze_call` tools for RocketRide agents
+
+---
+
+## Changelog
+
+| Commit | Change |
+|--------|--------|
+| Medical disclaimers | All AI responses include "consult your doctor" warnings; frontend yellow banners |
+| Config tests fix | Clear env vars before assertions for AliasChoices compatibility |
+| Pipe env vars | `.pipe` files use `${ROCKETRIDE_GEMINI_APIKEY}` — no hardcoded API keys |
+| Production merge | Security middleware, Render deploy, alert dedup, Aura NEO4J_USERNAME alias |
+| AI insights enhanced | Condition suggestions, recommended doctors, cross-senior search by symptom/medication |
+| Home link | Dashboard logo + sidebar link back to landing page |
+| Demo mode fix | Non-blocking toast in bottom-right corner |
+| Graph reasoning | Animated 6-step walkthrough of Neo4j reasoning chain with vis.js graph |
+| Family notifications | Alerts notify emergency contacts by severity (critical → all, high → primary) |
+| Live stats | Landing page shows real-time Neo4j counts |
+| Demo mode | One-click 8-step automated dashboard walkthrough |
+| Docs + Qwen3-235B | Updated all docs for GMI Cloud Qwen3-235B model |
+| Doctors graph | 159 doctors + 38 clinics in Neo4j; interactive doctors network visualization |
+| 60 tests | Unit + integration tests all passing |
+| CrewAI | 5 agents, 11 tools, 3 crew pipelines |
+| Bland AI voice | Automated check-in calls with doctor recommendations from Neo4j |
+| RocketRide pipelines | 4 .pipe files for AI reasoning |
+| GMI Cloud | Qwen3-235B inference for care plans, drug explanations |
+| Initial | Neo4j graph model, FastAPI backend, dashboard frontend |

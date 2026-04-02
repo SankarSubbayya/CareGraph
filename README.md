@@ -10,9 +10,9 @@ Clinical care is **infrequent**; **symptoms and medications change daily**. **El
 
 ## Neo4j and RocketRide AI
 
-**Neo4j** — Aura or local; nodes and relationships for seniors, medications, symptoms, check-ins, doctors, and more. **Cypher** backs dashboard stats, network views, drug interactions, side-effect paths, and recommendations. See [NEO4J_ARCHITECTURE.md](NEO4J_ARCHITECTURE.md).
+**Neo4j** stores the care graph (seniors, meds, symptoms, check-ins, doctors, alerts). The app queries it with Cypher to connect events quickly, detect risks like side effects/interactions, and power dashboard insights and recommendations.
 
-**RocketRide AI** — `pipelines/*.pipe` orchestrates **Gemini** for transcripts, drug explanations, care plans, and condition hints; optional RocketRide server with **GMI Cloud fallback** in `app/services/rocketride.py` (expanded under **RocketRide AI Pipelines** later in this file).
+**RocketRide AI** runs reusable `.pipe` workflows for transcript analysis, drug explanations, care plans, and condition suggestions. This keeps AI reasoning consistent and modular, with `app/services/rocketride.py` falling back to GMI Cloud when RocketRide is unavailable.
 
 ---
 

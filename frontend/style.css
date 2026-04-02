@@ -122,6 +122,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; b
 .notify-card.medium { border-left: 4px solid var(--warning); background: var(--warning-light); }
 .notify-target { width: 100%; font-size: 0.8rem; color: var(--primary); font-weight: 600; margin-top: 0.25rem; }
 
+/* AI Disclaimer */
+.ai-disclaimer { margin-top: 1.5rem; padding: 0.75rem 1rem; background: #fef3c7; border: 1px solid #fde68a; border-radius: var(--radius); font-size: 0.8rem; color: #92400e; font-weight: 500; }
+
 /* Graph Reasoning */
 .reasoning-steps { margin-bottom: 1.5rem; }
 .reasoning-step { display: flex; align-items: flex-start; gap: 1rem; padding: 1rem; border: 1px solid var(--gray-200); border-radius: var(--radius); margin-bottom: 0.5rem; opacity: 0.3; transition: all 0.5s ease; }

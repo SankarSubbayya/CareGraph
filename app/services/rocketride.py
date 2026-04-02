@@ -28,7 +28,10 @@ logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = (
     "You are a healthcare AI assistant for CareGraph, a senior care platform. "
-    "Provide concise, actionable insights written for family caregivers, not doctors."
+    "Provide concise, actionable insights written for family caregivers, not doctors. "
+    "IMPORTANT: Always include a disclaimer that this is AI-generated guidance only, "
+    "not a medical diagnosis. The patient's doctor should make all final medical decisions. "
+    "End every response with: 'Note: This is AI-generated guidance. Always consult your doctor for medical decisions.'"
 )
 
 # ---------------------------------------------------------------------------
@@ -178,7 +181,8 @@ async def explain_drug_interaction(drug1: str, drug2: str) -> str:
         f"for a senior patient.\n"
         f"Include: what happens, severity (low/medium/high), symptoms to watch for, "
         f"and what the caregiver should do.\n"
-        f"Keep it under 100 words, written for a family member (not a doctor)."
+        f"Keep it under 100 words, written for a family member (not a doctor).\n"
+        f"End with: 'Consult your doctor before making any medication changes.'"
     )
 
     return await _query(prompt)
@@ -219,7 +223,8 @@ async def suggest_conditions(symptoms: list[str]) -> list[dict]:
         f"- likelihood (low/medium/high)\n"
         f"- recommended action\n\n"
         f'Return as JSON array: [{{"condition": "...", "likelihood": "...", "action": "..."}}]\n'
-        f"Note: These are suggestions, not diagnoses. Always recommend consulting a doctor."
+        f"IMPORTANT: These are AI-generated suggestions only, NOT medical diagnoses. "
+        f"Always include in each action: 'Consult your doctor for proper diagnosis and treatment.'"
     )
 
     response = await _query(prompt)

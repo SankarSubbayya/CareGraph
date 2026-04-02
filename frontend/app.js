@@ -254,7 +254,7 @@ async function loadDrugInteractions() {
         if (!data.interactions.length) { el.innerHTML = '<p>No drug interactions detected.</p>'; return; }
         el.innerHTML = '<h3>Drug Interactions</h3>' + data.interactions.map(i =>
             `<div class="alert-card medium"><div style="flex:1"><strong>${i.drug1} ↔ ${i.drug2}</strong>${i.ai_explanation ? `<p style="margin-top:0.5rem;">${i.ai_explanation}</p>` : ''}</div></div>`
-        ).join('');
+        ).join('') + '<div class="ai-disclaimer">AI-generated explanations are for guidance only. Consult your doctor before making any medication changes.</div>';
     } catch(e) { el.innerHTML = `Error: ${e.message}`; }
 }
 
@@ -293,6 +293,7 @@ async function loadCareRec() {
     try {
         const data = await fetchJSON(`/api/graph/care-recommendation/${encodeURIComponent(phone)}`);
         el.innerHTML = `<h3>AI Care Plan for ${data.senior}</h3><div style="white-space:pre-wrap;line-height:1.6;">${data.recommendation || 'No recommendation available (set GMI_API_KEY in .env)'}</div>
+        <div class="ai-disclaimer">This is AI-generated guidance only — not a medical diagnosis. Your doctor should make all final medical decisions.</div>
         <h4 style="margin-top:1.5rem;">Graph Insights</h4><pre style="background:var(--gray-50);padding:1rem;border-radius:var(--radius);font-size:0.8rem;">${JSON.stringify(data.graph_insights, null, 2)}</pre>`;
     } catch(e) { el.innerHTML = `Error: ${e.message}`; }
 }
@@ -318,7 +319,7 @@ async function loadConditionSuggestions() {
                     </div>
                 </div>
             `).join('')}
-            <p style="margin-top:1rem;font-size:0.8rem;color:var(--gray-500);">These are AI suggestions, not diagnoses. Always consult a doctor.</p>`;
+            <div class="ai-disclaimer">These are AI-generated suggestions only — not medical diagnoses. Your doctor should make all final medical decisions.</div>`;
     } catch(e) { el.innerHTML = `Error: ${e.message}`; }
 }
 

@@ -5,6 +5,65 @@ async function fetchJSON(url, opts = {}) {
     if (!resp.ok) throw new Error(`API error: ${resp.status}`);
     return resp.json();
 }
+function escapeHTML(value) {
+    return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+function formatInlineMarkdown(text) {
+    return escapeHTML(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>');
+}
+function renderCarePlan(recommendation) {
+    if (!recommendation) return '<p>No recommendation available (set GMI_API_KEY in .env)</p>';
+
+    const lines = String(recommendation)
+        .replace(/\r\n/g, '\n')
+        .split('\n')
+        .map(line => line.trim())
+        .filter(Boolean);
+
+    const sections = [];
+    let listItems = [];
+
+    const flushList = () => {
+        if (!listItems.length) return;
+        sections.push(`<ul class="care-plan-list">${listItems.join('')}</ul>`);
+        listItems = [];
+    };
+
+    for (const rawLine of lines) {
+        const line = rawLine.replace(/^\*\*(.*?)\*\*$/g, '$1').trim();
+        const bulletMatch = line.match(/^[-*]\s+(.*)$/);
+        const numberedHeadingMatch = line.match(/^(\d+)\.\s+(.*)$/);
+
+        if (bulletMatch) {
+            listItems.push(`<li>${formatInlineMarkdown(bulletMatch[1])}</li>`);
+            continue;
+        }
+
+        flushList();
+
+        if (numberedHeadingMatch) {
+            sections.push(`<h4 class="care-plan-section-title">${escapeHTML(numberedHeadingMatch[1])}. ${formatInlineMarkdown(numberedHeadingMatch[2])}</h4>`);
+            continue;
+        }
+
+        if (line.endsWith(':')) {
+            sections.push(`<h4 class="care-plan-section-title">${formatInlineMarkdown(line.slice(0, -1))}</h4>`);
+            continue;
+        }
+
+        sections.push(`<p class="care-plan-paragraph">${formatInlineMarkdown(line)}</p>`);
+    }
+
+    flushList();
+    return `<div class="care-plan-content">${sections.join('')}</div>`;
+}
 function getInitials(name) { return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2); }
 function getColor(name) { let h = 0; for (const c of name) h = ((h << 5) - h) + c.charCodeAt(0); return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length]; }
 
@@ -292,7 +351,7 @@ async function loadCareRec() {
     el.innerHTML = '<p class="loading-text">Generating AI care recommendation...</p>';
     try {
         const data = await fetchJSON(`/api/graph/care-recommendation/${encodeURIComponent(phone)}`);
-        el.innerHTML = `<h3>AI Care Plan for ${data.senior}</h3><div style="white-space:pre-wrap;line-height:1.6;">${data.recommendation || 'No recommendation available (set GMI_API_KEY in .env)'}</div>
+        el.innerHTML = `<h3>AI Care Plan for ${escapeHTML(data.senior)}</h3>${renderCarePlan(data.recommendation)}
         <div class="ai-disclaimer">This is AI-generated guidance only — not a medical diagnosis. Your doctor should make all final medical decisions.</div>
         <h4 style="margin-top:1.5rem;">Graph Insights</h4><pre style="background:var(--gray-50);padding:1rem;border-radius:var(--radius);font-size:0.8rem;">${JSON.stringify(data.graph_insights, null, 2)}</pre>`;
     } catch(e) { el.innerHTML = `Error: ${e.message}`; }

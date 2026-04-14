@@ -1,0 +1,139 @@
+{
+  "viewport": {
+    "x": -152.71395540622166,
+    "y": 220.8070018486664,
+    "zoom": 0.5
+  },
+  "name": "Neo4j Graph Chat",
+  "description": "Natural language interface to query the CareGraph Neo4j database using Gemini",
+  "components": [
+    {
+      "id": "llm_gemini_1",
+      "provider": "llm_gemini",
+      "name": "gemini",
+      "config": {
+        "profile": "gemini-2_5-flash",
+        "gemini-2_5-flash": {
+          "apikey": "{{GEMINI_API_KEY}}"
+        },
+        "parameters": {
+          "google": {}
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 1325.7382550335572,
+          "y": 288.758389261745
+        },
+        "measured": {
+          "width": 150,
+          "height": 66
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "control": [
+        {
+          "classType": "llm",
+          "from": "db_neo4j_1"
+        }
+      ]
+    },
+    {
+      "id": "db_neo4j_1",
+      "provider": "db_neo4j",
+      "name": "CareGraph Neo4j",
+      "config": {
+        "profile": "default",
+        "default": {
+          "auth_method": "userpass",
+          "database": "neo4j",
+          "db_description": "CareGraph\n",
+          "max_attempts": 5,
+          "uri": "{{NEO4J_URI}}",
+          "user": "{{NEO4J_USER}}",
+          "password": "{{NEO4J_PASSWORD}}"
+        },
+        "uri": "{{NEO4J_URI}}",
+        "user": "{{NEO4J_USER}}",
+        "password": "{{NEO4J_PASSWORD}}",
+        "schema": "Graph Schema:\nNodes: (:Senior {name, phone, schedule, notes}), (:Medication {name}), (:Symptom {name}), (:Condition {name}), (:Doctor {name, specialty, phone}), (:FamilyMember {name, phone, relation}), (:Service {label, type})\nRelationships:\n(:Senior)-[:TAKES]->(:Medication)\n(:Senior)-[:REPORTED]->(:Symptom)\n(:Medication)-[:INTERACTS_WITH]->(:Medication)\n(:Medication)-[:SIDE_EFFECT]->(:Symptom)\n(:Symptom)-[:SUGGESTS]->(:Condition)\n(:Doctor)-[:CAN_TREAT]->(:Condition)\n(:Senior)-[:HAS_CONTACT]->(:FamilyMember)\n(:CheckIn)-[:DETECTED]->(:Symptom)",
+        "invoke": {
+          "llm": "llm_gemini_1"
+        },
+        "parameters": {
+          "google": {}
+        }
+      },
+      "ui": {
+        "position": {
+          "x": 1300,
+          "y": 100
+        },
+        "measured": {
+          "width": 150,
+          "height": 121
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "questions",
+          "from": "chat_1"
+        }
+      ]
+    },
+    {
+      "id": "response_answers_1",
+      "provider": "response_answers",
+      "config": {
+        "laneName": "answers"
+      },
+      "ui": {
+        "position": {
+          "x": 1550,
+          "y": 100
+        },
+        "measured": {
+          "width": 150,
+          "height": 66
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      },
+      "input": [
+        {
+          "lane": "answers",
+          "from": "db_neo4j_1"
+        }
+      ]
+    },
+    {
+      "id": "chat_1",
+      "provider": "chat",
+      "config": {
+        "hideForm": true,
+        "mode": "Source",
+        "parameters": {},
+        "type": "chat"
+      },
+      "ui": {
+        "position": {
+          "x": 835.2684563758389,
+          "y": -75.7046979865772
+        },
+        "measured": {
+          "width": 150,
+          "height": 66
+        },
+        "nodeType": "default",
+        "formDataValid": true
+      }
+    }
+  ],
+  "project_id": "4212d898-a73f-4e0f-818e-05f6ce48bb81",
+  "version": 1,
+  "docRevision": 11,
+  "source": "chat_1"
+}

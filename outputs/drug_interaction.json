@@ -1,0 +1,118 @@
+{
+  "Healthy/Positive": {
+    "input_meds": "Metformin 500mg, Lisinopril 10mg",
+    "input_conditions": [
+      {
+        "condition": "None",
+        "likelihood": "low",
+        "action": "Continue current care plan and maintain routine medication adherence."
+      }
+    ],
+    "output_interaction": {
+      "explanation": "The patient is currently on Metformin and Lisinopril and reports no symptoms. There are no adverse drug reactions or contraindications identified as the patient is asymptomatic and adherent to the prescribed regimen. Both medications are standard for managing blood glucose and blood pressure, respectively, and are well-tolerated when taken as directed.",
+      "severity": "low",
+      "symptoms_to_watch": [
+        "Dizziness or lightheadedness (potential orthostatic hypotension from Lisinopril)",
+        "Persistent dry cough (side effect of Lisinopril)",
+        "Gastrointestinal distress (common side effect of Metformin)",
+        "Signs of hypoglycemia (shakiness, confusion, or excessive sweating)"
+      ],
+      "action": "Continue current care plan and maintain routine medication adherence monitoring."
+    }
+  },
+  "Concerning Symptoms": {
+    "input_meds": "Metformin 500mg, Lisinopril 10mg",
+    "input_conditions": [
+      {
+        "condition": "Anemia",
+        "likelihood": "medium",
+        "action": "Schedule blood work to check hemoglobin and iron levels."
+      },
+      {
+        "condition": "Orthostatic Hypotension",
+        "likelihood": "medium",
+        "action": "Monitor blood pressure while lying, sitting, and standing."
+      },
+      {
+        "condition": "Dehydration",
+        "likelihood": "low",
+        "action": "Encourage fluid intake and observe for improvement in symptoms."
+      }
+    ],
+    "output_interaction": {
+      "explanation": "The patient is experiencing fatigue, dizziness, and pallor while on Lisinopril and Metformin. Lisinopril is an ACE inhibitor commonly associated with orthostatic hypotension, which could explain the dizziness. Metformin can rarely lead to vitamin B12 deficiency, which may manifest over time as anemia (contributing to fatigue and pallor). The symptoms warrant clinical investigation to rule out medication-induced hypotension or underlying nutritional deficiencies.",
+      "severity": "medium",
+      "symptoms_to_watch": [
+        "Fainting or syncopal episodes",
+        "Shortness of breath",
+        "Chest pain",
+        "Persistent confusion or lethargy",
+        "Rapid heart rate"
+      ],
+      "action": "Prioritize a check of blood pressure and heart rate (including orthostatic measurements). Contact the primary care physician to discuss scheduling a complete blood count (CBC) to screen for anemia and a follow-up to evaluate if current medication dosages require adjustment."
+    }
+  },
+  "Non-Adherence / Loneliness": {
+    "input_meds": "Warfarin 5mg, Metoprolol 25mg",
+    "input_conditions": [
+      {
+        "condition": "Anemia",
+        "likelihood": "medium",
+        "action": "Perform a complete blood count (CBC) to check hemoglobin and hematocrit levels."
+      },
+      {
+        "condition": "Orthostatic Hypotension",
+        "likelihood": "medium",
+        "action": "Measure blood pressure and heart rate in both lying and standing positions."
+      },
+      {
+        "condition": "Dehydration",
+        "likelihood": "low",
+        "action": "Assess fluid intake, skin turgor, and electrolyte balance."
+      }
+    ],
+    "output_interaction": {
+      "explanation": "The patient reports fatigue, dizziness, and pallor while taking Metformin and Lisinopril. Lisinopril is an ACE inhibitor known to cause hypotension, which can manifest as dizziness or lightheadedness, especially if the patient is dehydrated. Metformin can occasionally interfere with Vitamin B12 absorption, potentially leading to anemia-like symptoms such as fatigue and pallor over time. The combination of these symptoms warrants investigation to rule out orthostatic hypotension or underlying anemia.",
+      "severity": "medium",
+      "symptoms_to_watch": [
+        "Fainting or syncopal episodes",
+        "Shortness of breath",
+        "Chest pain",
+        "Confusion or mental fog",
+        "Persistent rapid heart rate"
+      ],
+      "action": "Perform orthostatic blood pressure checks (sitting and standing) and consult with the primary physician regarding a CBC blood test to rule out anemia or electrolyte imbalances."
+    }
+  },
+  "Critical / Respiratory Distress": {
+    "input_meds": "Albuterol HFA 90mcg, Fluticasone 250mcg",
+    "input_conditions": [
+      {
+        "condition": "Acute Asthma Exacerbation",
+        "likelihood": "high",
+        "action": "Seek immediate emergency medical attention; activate emergency services if breathing worsens."
+      },
+      {
+        "condition": "Cardiac Event (e.g., Angina or MI)",
+        "likelihood": "medium",
+        "action": "Immediate medical evaluation required due to chest tightness and respiratory distress."
+      },
+      {
+        "condition": "Panic Attack",
+        "likelihood": "low",
+        "action": "Monitor for symptom resolution once physical medical emergency is ruled out by clinical professionals."
+      }
+    ],
+    "output_interaction": {
+      "explanation": "The patient is currently on Metformin and Lisinopril and reports no symptoms. There are no adverse drug reactions or contraindications identified, as the patient is asymptomatic and compliant with their prescribed regimen. Both medications are standard for managing blood glucose and blood pressure and are generally well-tolerated.",
+      "severity": "low",
+      "symptoms_to_watch": [
+        "Dizziness or lightheadedness (potential orthostatic hypotension from Lisinopril)",
+        "Persistent dry cough (a known side effect of Lisinopril)",
+        "Gastrointestinal distress (common side effect of Metformin)",
+        "Signs of hypoglycemia (shakiness, confusion, or excessive sweating)"
+      ],
+      "action": "Continue current care plan and maintain routine medication adherence monitoring."
+    }
+  }
+}

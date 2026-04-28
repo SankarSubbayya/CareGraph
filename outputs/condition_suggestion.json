@@ -1,0 +1,137 @@
+{
+  "Healthy/Positive": {
+    "input_analysis": {
+      "mood": "happy",
+      "wellness_score": 10,
+      "medication_taken": true,
+      "symptoms": [],
+      "concerns": [],
+      "service_needs": [],
+      "summary": "The patient reports feeling great and confirms adherence to their morning medication regimen with no reported issues.",
+      "recommendation": "Continue current routine and monitor for any changes in well-being."
+    },
+    "output_conditions": [
+      {
+        "condition": "None",
+        "likelihood": "low",
+        "action": "Continue current care plan and maintain routine medication adherence."
+      }
+    ]
+  },
+  "Concerning Symptoms": {
+    "input_analysis": {
+      "mood": "concerning",
+      "wellness_score": 4,
+      "medication_taken": true,
+      "symptoms": [
+        "tired",
+        "dizzy",
+        "pale"
+      ],
+      "concerns": [
+        "fatigue",
+        "dizziness",
+        "pallor observed by caregiver"
+      ],
+      "service_needs": [
+        "medical evaluation"
+      ],
+      "summary": "The patient reports experiencing fatigue, dizziness, and visible pallor despite adherence to medication.",
+      "recommendation": "Monitor vital signs and consult a healthcare professional regarding the persistent dizziness and pallor."
+    },
+    "output_conditions": [
+      {
+        "condition": "Anemia",
+        "likelihood": "medium",
+        "action": "Schedule blood work to check hemoglobin and iron levels."
+      },
+      {
+        "condition": "Orthostatic Hypotension",
+        "likelihood": "medium",
+        "action": "Monitor blood pressure while lying, sitting, and standing."
+      },
+      {
+        "condition": "Dehydration",
+        "likelihood": "low",
+        "action": "Encourage fluid intake and observe for improvement in symptoms."
+      }
+    ]
+  },
+  "Non-Adherence / Loneliness": {
+    "input_analysis": {
+      "mood": "sad",
+      "wellness_score": 3,
+      "medication_taken": false,
+      "symptoms": [
+        "lonely",
+        "lack of appetite"
+      ],
+      "concerns": [
+        "missed medication",
+        "loneliness",
+        "poor appetite"
+      ],
+      "service_needs": [
+        "medication management",
+        "social support",
+        "nutritional assessment"
+      ],
+      "summary": "Patient reports not feeling well, has missed their medication doses, and is experiencing feelings of loneliness and lack of appetite.",
+      "recommendation": "Follow up with patient to ensure medications are resumed and evaluate for potential depression or nutritional intervention."
+    },
+    "output_conditions": [
+      {
+        "condition": "Anemia",
+        "likelihood": "medium",
+        "action": "Perform a complete blood count (CBC) to check hemoglobin and hematocrit levels."
+      },
+      {
+        "condition": "Orthostatic Hypotension",
+        "likelihood": "medium",
+        "action": "Measure blood pressure and heart rate in both lying and standing positions."
+      },
+      {
+        "condition": "Dehydration",
+        "likelihood": "low",
+        "action": "Assess fluid intake, skin turgor, and electrolyte balance."
+      }
+    ]
+  },
+  "Critical / Respiratory Distress": {
+    "input_analysis": {
+      "mood": "concerning",
+      "wellness_score": 2,
+      "medication_taken": null,
+      "symptoms": [
+        "difficulty breathing",
+        "chest tightness",
+        "panic"
+      ],
+      "concerns": [
+        "acute respiratory distress"
+      ],
+      "service_needs": [
+        "emergency medical care"
+      ],
+      "summary": "Patient experiencing worsening respiratory distress and chest tightness that is unresponsive to inhaler use.",
+      "recommendation": "Seek immediate emergency medical attention."
+    },
+    "output_conditions": [
+      {
+        "condition": "Acute Asthma Exacerbation",
+        "likelihood": "high",
+        "action": "Seek immediate emergency medical attention; activate emergency services if breathing worsens."
+      },
+      {
+        "condition": "Cardiac Event (e.g., Angina or MI)",
+        "likelihood": "medium",
+        "action": "Immediate medical evaluation required due to chest tightness and respiratory distress."
+      },
+      {
+        "condition": "Panic Attack",
+        "likelihood": "low",
+        "action": "Monitor for symptom resolution once physical medical emergency is ruled out by clinical professionals."
+      }
+    ]
+  }
+}

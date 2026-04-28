@@ -1,0 +1,83 @@
+{
+  "Healthy/Positive": {
+    "input": "I'm feeling great today! Yes, I took all my medications this morning. No issues at all.",
+    "output": {
+      "mood": "happy",
+      "wellness_score": 10,
+      "medication_taken": true,
+      "symptoms": [],
+      "concerns": [],
+      "service_needs": [],
+      "summary": "The patient reports feeling great and confirms adherence to their morning medication regimen with no reported issues.",
+      "recommendation": "Continue current routine and monitor for any changes in well-being."
+    }
+  },
+  "Concerning Symptoms": {
+    "input": "Feeling a bit tired and dizzy today. Yes I took my medications though. Sarah says I look pale. I've been feeling this for a few hours.",
+    "output": {
+      "mood": "concerning",
+      "wellness_score": 4,
+      "medication_taken": true,
+      "symptoms": [
+        "tired",
+        "dizzy",
+        "pale"
+      ],
+      "concerns": [
+        "fatigue",
+        "dizziness",
+        "pallor observed by caregiver"
+      ],
+      "service_needs": [
+        "medical evaluation"
+      ],
+      "summary": "The patient reports experiencing fatigue, dizziness, and visible pallor despite adherence to medication.",
+      "recommendation": "Monitor vital signs and consult a healthcare professional regarding the persistent dizziness and pallor."
+    }
+  },
+  "Non-Adherence / Loneliness": {
+    "input": "I'm not feeling great. I forgot to take my medications. I've been lonely and I haven't had much of an appetite.",
+    "output": {
+      "mood": "sad",
+      "wellness_score": 3,
+      "medication_taken": false,
+      "symptoms": [
+        "lonely",
+        "lack of appetite"
+      ],
+      "concerns": [
+        "missed medication",
+        "loneliness",
+        "poor appetite"
+      ],
+      "service_needs": [
+        "medication management",
+        "social support",
+        "nutritional assessment"
+      ],
+      "summary": "Patient reports not feeling well, has missed their medication doses, and is experiencing feelings of loneliness and lack of appetite.",
+      "recommendation": "Follow up with patient to ensure medications are resumed and evaluate for potential depression or nutritional intervention."
+    }
+  },
+  "Critical / Respiratory Distress": {
+    "input": "It's getting harder to breathe, even just sitting here. My chest feels tight. I used my inhaler but it's not helping much. I'm feeling a bit panicked.",
+    "output": {
+      "mood": "concerning",
+      "wellness_score": 2,
+      "medication_taken": null,
+      "symptoms": [
+        "difficulty breathing",
+        "chest tightness",
+        "panic"
+      ],
+      "concerns": [
+        "acute respiratory distress"
+      ],
+      "service_needs": [
+        "emergency medical care"
+      ],
+      "summary": "Patient experiencing worsening respiratory distress and chest tightness that is unresponsive to inhaler use.",
+      "recommendation": "Seek immediate emergency medical attention."
+    }
+  }
+}

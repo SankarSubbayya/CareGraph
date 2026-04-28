@@ -1,0 +1,61 @@
+{
+  "Healthy/Positive": {
+    "patient_transcript": "I'm feeling great today! Yes, I took all my medications this morning. No issues at all.",
+    "final_care_plan": {
+      "explanation": "The patient is clinically stable, asymptomatic, and reports full adherence to their medication regimen (Metformin and Lisinopril). No contraindications or adverse effects were identified during this assessment.",
+      "severity": "low",
+      "symptoms_to_watch": [
+        "dizziness or lightheadedness",
+        "persistent cough",
+        "signs of hypoglycemia (shaking, sweating, confusion)",
+        "gastrointestinal distress"
+      ],
+      "action": "Continue current medication regimen as prescribed. Maintain routine monitoring of blood glucose and blood pressure, and proceed with scheduled follow-up appointments."
+    }
+  },
+  "Concerning Symptoms": {
+    "patient_transcript": "Feeling a bit tired and dizzy today. Yes I took my medications though. Sarah says I look pale. I've been feeling this for a few hours.",
+    "final_care_plan": {
+      "explanation": "The patient is presenting with a combination of fatigue, dizziness, and pallor while on Lisinopril and Metformin. These symptoms are clinically significant as they suggest a possible adverse reaction to the antihypertensive therapy (orthostatic hypotension) or a potential metabolic issue, such as a B12 deficiency or anemia, secondary to chronic Metformin use.",
+      "severity": "medium",
+      "symptoms_to_watch": [
+        "syncope (fainting)",
+        "persistent tachycardia",
+        "worsening lightheadedness upon standing",
+        "shortness of breath",
+        "extreme pallor or jaundice"
+      ],
+      "action": "Schedule an urgent clinical evaluation, including a blood pressure check (lying and standing), a complete blood count (CBC), and a metabolic panel including B12 levels to assess for drug-induced complications; advise patient to rise slowly from sitting or lying positions until evaluation."
+    }
+  },
+  "Non-Adherence / Loneliness": {
+    "patient_transcript": "I'm not feeling great. I forgot to take my medications. I've been lonely and I haven't had much of an appetite.",
+    "final_care_plan": {
+      "explanation": "The patient is presenting with multiple concerning symptoms including fatigue, dizziness, and pallor, complicated by medication non-adherence and psychosocial factors like loss of appetite and loneliness. The concurrent use of Lisinopril and Metformin increases the risk of orthostatic hypotension and potential vitamin B12 deficiency-related anemia, both of which require immediate clinical evaluation.",
+      "severity": "high",
+      "symptoms_to_watch": [
+        "Increased dizziness or lightheadedness upon standing",
+        "Syncope (fainting)",
+        "Shortness of breath",
+        "Persistent lethargy or confusion",
+        "Further decline in nutritional intake"
+      ],
+      "action": "Schedule an urgent primary care appointment for a physical examination, blood pressure monitoring (including orthostatic vitals), and laboratory testing (CBC, B12/folate levels, and metabolic panel). Implement a medication adherence support plan and facilitate a mental health or social work referral to address appetite loss and isolation."
+    }
+  },
+  "Critical / Respiratory Distress": {
+    "patient_transcript": "It's getting harder to breathe, even just sitting here. My chest feels tight. I used my inhaler but it's not helping much. I'm feeling a bit panicked.",
+    "final_care_plan": {
+      "explanation": "The patient is presenting with severe respiratory distress and chest tightness unresponsive to treatment. This indicates a medical emergency that could be a cardiac event or severe acute asthma exacerbation, requiring immediate intervention.",
+      "severity": "high",
+      "symptoms_to_watch": [
+        "Worsening chest pain",
+        "Difficulty breathing or shortness of breath",
+        "Radiating pain to the jaw or left arm",
+        "Confusion or change in mental status",
+        "Bluish tint to lips or fingernails"
+      ],
+      "action": "Initiate emergency protocols immediately; contact 911 or local emergency services for urgent transport to the nearest emergency department."
+    }
+  }
+}
